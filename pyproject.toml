@@ -32,7 +32,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-bnd = "beneuro_data.cli:app"
+bnd = "beneuro_data.cli.cli:app"
 
 [tool.black]
 line-length = 92
