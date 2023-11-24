@@ -49,7 +49,8 @@ def test_list_subject_sessions_on_day(
 
     sessions_on_day = list_subject_sessions_on_day(subject_path, test_case.day)
 
-    assert sessions_on_day == test_case.sessions_on_day
+    # they don't have to be in the same order, so test for equality of sets
+    assert set(sessions_on_day) == set(test_case.sessions_on_day)
 
 
 @dataclass
