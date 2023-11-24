@@ -84,19 +84,19 @@ def list_subject_sessions_on_day(subject_path: Path, day: datetime.date) -> list
 
 
 def list_all_sessions_on_day(
-    raw_or_processed_path: Path, day: datetime.date
+    raw_or_processed_path: Path,
+    day: datetime.date,
+    ignored_subject_level_dirs: tuple[str, ...],
 ) -> list[tuple[str, str]]:
     """
     Lists all sessions on a given day from all subjects.
     Returns a list of tuples with (subject_name, session_name).
     """
-    config = _load_config()
-
     days_sessions = []
     for subject_path in raw_or_processed_path.iterdir():
         if subject_path.is_dir():
             subject_name = subject_path.name
-            if subject_name in config.IGNORED_SUBJECT_LEVEL_DIRS:
+            if subject_name in ignored_subject_level_dirs:
                 continue
 
             for sess_name in list_subject_sessions_on_day(subject_path, day):

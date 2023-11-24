@@ -57,6 +57,7 @@ class DaysSessionsMultipleSubjectsTestCase:
     yaml_names: list[str]
     sessions_on_day: list[tuple[str, str]]
     day: datetime.date
+    ignored_subject_level_dirs: tuple[str, ...] = ()
 
 
 multiple_subjects_test_cases = [
@@ -68,6 +69,17 @@ multiple_subjects_test_cases = [
             ("M011", "M011_2023_08_04_18_00"),
         ],
         datetime.date(2023, 8, 4),
+        tuple(),
+    ),
+    DaysSessionsMultipleSubjectsTestCase(
+        ["one_session.yaml", "two_sessions.yaml", "treadmill_calibration_to_ignore.yaml"],
+        [
+            ("M015", "M015_2023_08_04_14_30"),
+            ("M011", "M011_2023_08_04_14_30"),
+            ("M011", "M011_2023_08_04_18_00"),
+        ],
+        datetime.date(2023, 8, 4),
+        ("treadmill-calibration",),
     ),
 ]
 
@@ -76,7 +88,7 @@ multiple_subjects_test_cases = [
 def test_list_all_sessions_on_day(
     tmp_path: Path, test_case: DaysSessionsMultipleSubjectsTestCase
 ):
-    # _prepare_directory_structure can only set up directories for one mouse
+    # _prepare_directory_structure can only set up directories for one subject
     # because it (re)creates the "raw" directory
     wipe_raw_dir = True
     for yaml_name in test_case.yaml_names:
@@ -90,12 +102,9 @@ def test_list_all_sessions_on_day(
 
     raw_dir_path = tmp_path / "raw"
 
-    sessions_on_day = list_all_sessions_on_day(raw_dir_path, test_case.day)
-
-    print("found:")
-    print(sessions_on_day)
-    print("expected:")
-    print(test_case.sessions_on_day)
+    sessions_on_day = list_all_sessions_on_day(
+        raw_dir_path, test_case.day, test_case.ignored_subject_level_dirs
+    )
 
     # they don't have to be in the same order, so test for equality of sets
     assert set(sessions_on_day) == set(test_case.sessions_on_day)

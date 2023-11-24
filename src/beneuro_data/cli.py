@@ -384,7 +384,9 @@ def list_today(
 
     today = datetime.datetime.today()
 
-    todays_sessions_with_subject = list_all_sessions_on_day(raw_or_processed_path, today)
+    todays_sessions_with_subject = list_all_sessions_on_day(
+        raw_or_processed_path, today, config.IGNORED_SUBJECT_LEVEL_DIRS
+    )
 
     for subj, sess in todays_sessions_with_subject:
         print(f"{subj} - {sess}")
