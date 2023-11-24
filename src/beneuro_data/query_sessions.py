@@ -67,7 +67,7 @@ def get_last_session_path(subject_path: Path, subject_name: str) -> Path:
     return valid_subject_sessions[last_session_index]
 
 
-def list_subject_sessions_on_day(subject_path: Path, day: datetime.datetime) -> list[str]:
+def list_subject_sessions_on_day(subject_path: Path, day: datetime.date) -> list[str]:
     """
     Lists all sessions on a given day for a given subject.
     """
@@ -84,7 +84,7 @@ def list_subject_sessions_on_day(subject_path: Path, day: datetime.datetime) -> 
 
 
 def list_all_sessions_on_day(
-    raw_or_processed_path: Path, day: datetime.datetime
+    raw_or_processed_path: Path, day: datetime.date
 ) -> list[tuple[str, str]]:
     """
     Lists all sessions on a given day from all subjects.
