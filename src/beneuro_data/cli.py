@@ -11,7 +11,7 @@ from beneuro_data.query_sessions import (
     list_all_sessions_on_day,
 )
 from beneuro_data.data_validation import validate_raw_session
-from beneuro_data.data_transfer import upload_raw_session
+from beneuro_data.data_transfer import upload_raw_session, download_raw_session
 from beneuro_data.video_renaming import rename_raw_videos_of_session
 from beneuro_data.config import _get_env_path, _load_config
 from beneuro_data.update_bnd import update_bnd
@@ -539,6 +539,126 @@ def self_update(
     Update the bnd tool by pulling the latest commits from the repo's main branch.
     """
     update_bnd(print_new_commits=verbose)
+
+
+@app.command()
+def download_session(
+    remote_session_path: Annotated[
+        Path,
+        typer.Argument(
+            help="Path to session directory on the server. Can be relative or absolute"
+        ),
+    ],
+    subject_name: Annotated[
+        str,
+        typer.Argument(
+            help="Name of the subject the session belongs to. (Used for confirmation.)"
+        ),
+    ],
+    processing_level: Annotated[
+        str, typer.Argument(help="Processing level of the session. raw or processed.")
+    ] = "raw",
+    include_behavior: Annotated[
+        bool,
+        typer.Option(
+            "--include-behavior/--ignore-behavior", help="Upload behavioral data or not."
+        ),
+    ] = True,
+    include_ephys: Annotated[
+        bool,
+        typer.Option("--include-ephys/--ignore-ephys", help="Upload ephys data or not."),
+    ] = True,
+    include_videos: Annotated[
+        bool,
+        typer.Option("--include-videos/--ignore-videos", help="Upload videos data or not."),
+    ] = True,
+):
+    """
+    Download (raw) experimental data in a given session from the remote server.
+
+    Example usage:
+        `bnd download-session . M017`
+    """
+    if processing_level != "raw":
+        raise NotImplementedError("Sorry, only raw data is supported for now.")
+
+    if all([not include_behavior, not include_ephys, not include_videos]):
+        raise ValueError("At least one data type must be checked.")
+
+    config = _load_config()
+
+    download_raw_session(
+        remote_session_path.absolute(),
+        subject_name,
+        config.LOCAL_PATH,
+        config.REMOTE_PATH,
+        include_behavior,
+        include_ephys,
+        include_videos,
+    )
+
+    return True
+
+
+@app.command()
+def download_last(
+    subject_name: Annotated[
+        str,
+        typer.Argument(help="Name of the subject the session belongs to."),
+    ],
+    processing_level: Annotated[
+        str, typer.Argument(help="Processing level of the session. raw or processed.")
+    ] = "raw",
+    include_behavior: Annotated[
+        bool,
+        typer.Option(
+            "--include-behavior/--ignore-behavior", help="Download behavioral data or not."
+        ),
+    ] = True,
+    include_ephys: Annotated[
+        bool,
+        typer.Option("--include-ephys/--ignore-ephys", help="Download ephys data or not."),
+    ] = True,
+    include_videos: Annotated[
+        bool,
+        typer.Option(
+            "--include-videos/--ignore-videos", help="Download videos data or not."
+        ),
+    ] = True,
+):
+    """
+    Download (raw) experimental data in the last session of a subject from the remote server.
+
+    Example usage:
+        `bnd download-last M017`
+    """
+    if processing_level != "raw":
+        raise NotImplementedError("Sorry, only raw data is supported for now.")
+
+    if all([not include_behavior, not include_ephys, not include_videos]):
+        raise ValueError("At least one data type must be downloaded.")
+
+    config = _load_config()
+
+    subject_path = config.REMOTE_PATH / processing_level / subject_name
+
+    # get the last valid session
+    last_session_path = get_last_session_path(subject_path, subject_name).absolute()
+
+    # TODO Error messages don't make sense because downloading uses the upload function
+    # TODO Should remote files be checked the same way before downloading
+    # the same way local files are checked before uploading?
+    download_raw_session(
+        last_session_path.absolute(),
+        subject_name,
+        config.LOCAL_PATH,
+        config.REMOTE_PATH,
+        include_behavior,
+        include_ephys,
+        include_videos,
+    )
+
+    return True
 
 
 if __name__ == "__main__":
