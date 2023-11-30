@@ -222,6 +222,20 @@ def upload_session(
             help="Upload extra files that are created by the experimenter or other software.",
         ),
     ] = True,
+    rename_videos_first: Annotated[
+        bool,
+        typer.Option(
+            "--rename-videos/--no-rename-videos",
+            help="Rename videos before validating and uploading.",
+        ),
+    ] = True,
+    rename_extra_files_first: Annotated[
+        bool,
+        typer.Option(
+            "--rename-extra-files/--no-rename-extra-files",
+            help="Rename extra files (e.g. comment.txt) before validating and uploading.",
+        ),
+    ] = True,
 ):
     """
     Upload (raw) experimental data in a given session to the remote server.
@@ -248,6 +262,8 @@ def upload_session(
         include_extra_files,
         config.WHITELISTED_FILES_IN_ROOT,
         config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
+        rename_videos_first,
+        rename_extra_files_first,
     )
 
     return True
@@ -281,6 +297,20 @@ def upload_last(
         typer.Option(
             "--include-extra-files/--ignore-extra-files",
             help="Upload extra files that are created by the experimenter or other software.",
+        ),
+    ] = True,
+    rename_videos_first: Annotated[
+        bool,
+        typer.Option(
+            "--rename-videos/--no-rename-videos",
+            help="Rename videos before validating and uploading.",
+        ),
+    ] = True,
+    rename_extra_files_first: Annotated[
+        bool,
+        typer.Option(
+            "--rename-extra-files/--no-rename-extra-files",
+            help="Rename extra files (e.g. comment.txt) before validating and uploading.",
         ),
     ] = True,
 ):
@@ -320,6 +350,8 @@ def upload_last(
         include_extra_files,
         config.WHITELISTED_FILES_IN_ROOT,
         config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
+        rename_videos_first,
+        rename_extra_files_first,
     )
 
     return True
@@ -350,6 +382,20 @@ def validate_sessions(
         bool,
         typer.Option("--check-videos/--ignore-videos", help="Check videos data or not."),
     ] = True,
+    rename_videos_first: Annotated[
+        bool,
+        typer.Option(
+            "--rename-videos/--no-rename-videos",
+            help="Rename videos before validating and uploading.",
+        ),
+    ] = True,
+    rename_extra_files_first: Annotated[
+        bool,
+        typer.Option(
+            "--rename-extra-files/--no-rename-extra-files",
+            help="Rename extra files (e.g. comment.txt) before validating and uploading.",
+        ),
+    ] = True,
 ):
     """
     Validate (raw) experimental data in all sessions of a given subject.
@@ -379,6 +425,8 @@ def validate_sessions(
                     check_videos,
                     config.WHITELISTED_FILES_IN_ROOT,
                     config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
+                    rename_videos_first,
+                    rename_extra_files_first,
                 )
             except Exception as e:
                 print(f"[bold red]Problem with {session_path.name}: {e.args[0]}\n")
