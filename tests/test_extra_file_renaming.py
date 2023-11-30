@@ -109,7 +109,14 @@ extension_test_cases = [
             Path("M011_2023_04_04_16_00_g1/M011_2023_04_04_16_00_channel_map.txt"),
         ),
         None,
-    )
+    ),
+    ExtraFilesWithExtensionTestCase(
+        "trajectory_with_name_already_good.yaml",
+        "M011_2023_04_04_16_00",
+        (Path("M011_2023_04_04_16_00_g1/M011_2023_04_04_16_00_trajectory.txt"),),
+        (Path("M011_2023_04_04_16_00_g1/M011_2023_04_04_16_00_trajectory.txt"),),
+        None,
+    ),
 ]
 
 
@@ -143,6 +150,9 @@ def test_rename_extra_files_with_extension(
             assert (session_path / fname).exists()
 
         for fname in test_case.orig_filenames:
+            # if the file's name was already the expected one, it should still be there
+            if fname in test_case.expected_new_filenames:
+                continue
             assert not (session_path / fname).exists()
 
     elif issubclass(test_case.expected_error, BaseException):

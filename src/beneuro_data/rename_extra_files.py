@@ -27,6 +27,10 @@ def rename_extra_files_with_extension(session_path: Path, extension: str) -> lis
 
     new_paths = []
     for file_path in files_found:
+        # if it already has the session name in the beginning, skip it
+        if file_path.name.startswith(session_path.name):
+            continue
+
         new_filename = session_path.name + "_" + file_path.name
         new_path = file_path.with_name(new_filename)
         if new_path.exists():
