@@ -58,7 +58,7 @@ def _rename_extra_files_with_extension(session_path: Path, extension: str) -> No
     )
 
 
-def rename_extra_files(
+def rename_extra_files_in_session(
     session_path: Path,
     whitelisted_files_in_root: tuple[str, ...],
     extensions_to_rename_and_upload: tuple[str, ...],

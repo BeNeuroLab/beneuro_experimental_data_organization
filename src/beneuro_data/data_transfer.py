@@ -14,7 +14,7 @@ from beneuro_data.validate_argument import validate_argument
 from beneuro_data.video_renaming import rename_raw_videos_of_session
 
 from beneuro_data.extra_file_handling import (
-    rename_extra_files,
+    rename_extra_files_in_session,
     _find_extra_files_with_extension,
     _find_whitelisted_files_in_root,
 )
@@ -81,7 +81,7 @@ def upload_raw_session(
                 "Do not rename extra files with upload_raw_session if you're not uploading them."
             )
 
-        rename_extra_files(
+        rename_extra_files_in_session(
             local_session_path, whitelisted_files_in_root, allowed_extensions_not_in_root
         )
 
@@ -384,7 +384,7 @@ def upload_extra_files(
     remote_session_path = remote_root / local_session_path.relative_to(local_root)
 
     # rename extra files first
-    rename_extra_files(
+    rename_extra_files_in_session(
         local_session_path, whitelisted_files_in_root, allowed_extensions_not_in_root
     )
 

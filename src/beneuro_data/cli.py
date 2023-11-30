@@ -15,6 +15,7 @@ from beneuro_data.data_transfer import upload_raw_session
 from beneuro_data.video_renaming import rename_raw_videos_of_session
 from beneuro_data.config import _get_env_path, _load_config
 from beneuro_data.update_bnd import update_bnd
+from beneuro_data.extra_file_handling import rename_extra_files_in_session
 
 
 app = typer.Typer()
@@ -184,6 +185,41 @@ def rename_videos(
         session_path.absolute(),
         subject_name,
         verbose,
+    )
+
+
+@app.command()
+def rename_extra_files(
+    session_path: Annotated[
+        Path, typer.Argument(help="Path to session directory. Can be relative or absolute")
+    ],
+    subject_name: Annotated[
+        str,
+        typer.Argument(
+            help="Name of the subject the session belongs to. (Used for confirmation.)"
+        ),
+    ],
+):
+    """
+    Rename the extra files (found based on the config) to the convention we use.
+
+    Example usage:
+
+        `bnd rename-extra-files . M017`
+
+        `bnd rename-extra-files /absolute/path/to/session M017`
+    """
+    if not session_path.absolute().is_dir():
+        raise ValueError("Session path must be a directory.")
+    if not session_path.absolute().exists():
+        raise ValueError("Session path does not exist.")
+
+    config = _load_config()
+
+    rename_extra_files_in_session(
+        session_path.absolute(),
+        tuple(config.WHITELISTED_FILES_IN_ROOT),
+        tuple(config.EXTENSIONS_TO_RENAME_AND_UPLOAD),
     )
 
 
