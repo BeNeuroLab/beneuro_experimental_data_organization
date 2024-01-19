@@ -120,9 +120,17 @@ def get_ap_stream_names(recording_path: Path):
 def run_kilosort_on_recording_and_save_in_processed(
     raw_recording_path: Path,
     base_path: Path,
-    stream_names_to_process: Optional[list] = None,
+    stream_names_to_process: Optional[tuple[str, ...]] = None,
     clean_up_temp_files: bool = False,
 ):
+    if isinstance(raw_recording_path, str):
+        raw_recording_path = Path(raw_recording_path)
+    if isinstance(base_path, str):
+        base_path = Path(base_path)
+
+    if not raw_recording_path.is_relative_to(base_path / "raw"):
+        raise ValueError(f"{raw_recording_path} is not in {base_path / 'raw'}")
+
     # determine output path
     raw_base_path = base_path / "raw"
     processed_base_path = base_path / "processed"
@@ -135,7 +143,7 @@ def run_kilosort_on_recording_and_save_in_processed(
         raw_base_path
     )
     processed_recording_ephys_path = (
-        processed_session_path / f"{session_folder_name}_epyhs" / recording_folder_name
+        processed_session_path / f"{session_folder_name}_ephys" / recording_folder_name
     )
 
     if stream_names_to_process is None:
@@ -165,13 +173,21 @@ def run_kilosort_on_session_and_save_in_processed(
     raw_session_path: Path,
     subject_name: str,
     base_path: Path,
+    allowed_extensions_not_in_root: tuple[str, ...],
+    stream_names_to_process: Optional[tuple[str, ...]] = None,
     clean_up_temp_files: bool = False,
 ):
+    if isinstance(raw_session_path, str):
+        raw_session_path = Path(raw_session_path)
+
     ephys_recording_folders = validate_raw_ephys_data_of_session(
-        raw_session_path, subject_name
+        raw_session_path, subject_name, allowed_extensions_not_in_root
     )
 
     for recording_path in ephys_recording_folders:
         run_kilosort_on_recording_and_save_in_processed(
-            recording_path, base_path, clean_up_temp_files
+            recording_path,
+            base_path,
+            stream_names_to_process,
+            clean_up_temp_files,
         )
