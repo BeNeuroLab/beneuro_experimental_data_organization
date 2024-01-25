@@ -54,6 +54,12 @@ def update_bnd(print_new_commits: bool = False):
         # pull changes from origin/main
         _run_git_command(package_path, ["pull", "origin", "main"])
 
+        print(
+            "NOTE: If the install hangs, running the following then retrying might help:",
+            end="\t",
+        )
+        print("export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring")
+
         # install the updated package
         subprocess.run(["poetry", "install"], cwd=package_path)
 
