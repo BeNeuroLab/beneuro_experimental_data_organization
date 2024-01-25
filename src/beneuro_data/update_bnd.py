@@ -20,7 +20,9 @@ def _get_new_commits(repo_path: str) -> list[str]:
     _run_git_command(repo_path, ["fetch"])
 
     # Check if origin/main has new commits compared to the local branch
-    new_commits = _run_git_command(repo_path, ["log", "HEAD..origin/main", "--oneline"])
+    new_commits = _run_git_command(
+        repo_path, ["log", "HEAD..origin/poetry_install_on_update", "--oneline"]
+    )
 
     return [commit.strip() for commit in new_commits.split("\n") if commit.strip() != ""]
 
@@ -50,7 +52,7 @@ def update_bnd(print_new_commits: bool = False):
     if len(new_commits) > 0:
         print("New commits found, pulling changes...")
         # pull changes from origin/main
-        _run_git_command(package_path, ["pull", "origin", "main"])
+        _run_git_command(package_path, ["pull", "origin", "poetry_install_on_update"])
         # install the updated package
         subprocess.run(["poetry", "install"], cwd=package_path)
         print("Package updated successfully.")
