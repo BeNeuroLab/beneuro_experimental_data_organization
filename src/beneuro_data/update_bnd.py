@@ -49,7 +49,10 @@ def update_bnd(print_new_commits: bool = False):
 
     if len(new_commits) > 0:
         print("New commits found, pulling changes...")
+        # pull changes from origin/main
         _run_git_command(package_path, ["pull", "origin", "main"])
+        # install the updated package
+        subprocess.run(["poetry", "install"], cwd=package_path)
         print("Package updated successfully.")
 
         if print_new_commits:
