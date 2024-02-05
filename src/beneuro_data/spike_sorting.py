@@ -15,6 +15,7 @@ def run_kilosort_on_stream(
     stream_name: str,
     output_path: Path,
     clean_up_temp_files: bool = False,
+    verbose: bool = False,
     sorter_params: Optional[dict] = None,
 ):
     """
@@ -47,6 +48,7 @@ def run_kilosort_on_stream(
         output_folder=str(output_path),
         # docker_image = "spikeinterface/kilosort3-compiled-base:latest",
         docker_image=True,
+        verbose=verbose,
         **sorter_params,
     )
 
@@ -122,6 +124,7 @@ def run_kilosort_on_recording_and_save_in_processed(
     base_path: Path,
     stream_names_to_process: Optional[tuple[str, ...]] = None,
     clean_up_temp_files: bool = False,
+    verbose: bool = False,
 ):
     if isinstance(raw_recording_path, str):
         raw_recording_path = Path(raw_recording_path)
@@ -161,11 +164,15 @@ def run_kilosort_on_recording_and_save_in_processed(
         probe_folder_name = f"{processed_recording_ephys_path.name}_{probe_name}"
         processed_probe_path = processed_recording_ephys_path / probe_folder_name
 
+        if verbose:
+            print(f"Running KiloSort for {ap_stream_name}")
+
         sorting_KS3 = run_kilosort_on_stream(
             input_path=raw_recording_path,
             stream_name=f"{probe_name}.ap",
             output_path=processed_probe_path,
             clean_up_temp_files=clean_up_temp_files,
+            verbose=verbose,
         )
 
 
@@ -176,6 +183,7 @@ def run_kilosort_on_session_and_save_in_processed(
     allowed_extensions_not_in_root: tuple[str, ...],
     stream_names_to_process: Optional[tuple[str, ...]] = None,
     clean_up_temp_files: bool = False,
+    verbose: bool = False,
 ):
     if isinstance(raw_session_path, str):
         raw_session_path = Path(raw_session_path)
@@ -185,9 +193,13 @@ def run_kilosort_on_session_and_save_in_processed(
     )
 
     for recording_path in ephys_recording_folders:
+        if verbose:
+            print(f"Processing {recording_path.name}...")
+
         run_kilosort_on_recording_and_save_in_processed(
             recording_path,
             base_path,
             stream_names_to_process,
             clean_up_temp_files,
+            verbose,
         )
