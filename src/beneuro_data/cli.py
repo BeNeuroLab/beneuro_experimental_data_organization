@@ -51,6 +51,26 @@ def kilosort_session(
         bool, typer.Option(help="Print info about what is being run.")
     ] = True,
 ):
+    """
+    Run KiloSort 3 on a session and save the results in the processed folder.
+
+    \b
+    Basic usage:
+        `bnd kilosort-session . M020`
+
+    \b
+    Only sorting specific probes:
+        `bnd kilosort-session . M020 imec0`
+        `bnd kilosort-session . M020 imec0 imec1`
+
+    \b
+    Keeping binary files useful for Phy:
+        `bnd kilosort-session . M020 --keep-temp-files`
+
+    \b
+    Suppressing output:
+        `bnd kilosort-session . M020 --no-verbose`
+    """
     config = _load_config()
 
     if not local_session_path.absolute().is_dir():
