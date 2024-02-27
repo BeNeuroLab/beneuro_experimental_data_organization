@@ -1,4 +1,4 @@
-import os
+import filecmp
 import shutil
 from pathlib import Path
 
@@ -252,15 +252,20 @@ def upload_raw_behavioral_data(
         for local_path in local_file_paths
     ]
 
-    for remote_path in remote_file_paths:
-        if remote_path.exists():
-            raise FileExistsError(f"Remote file already exists: {remote_path}")
+    for local_path, remote_path in zip(local_file_paths, remote_file_paths):
+        if remote_path.exists() and not filecmp.cmp(local_path, remote_path):
+            raise FileExistsError(
+                f"Remote file already exists and is different from local file: {remote_path}"
+            )
 
     # 4. copy files in order
     remote_files_copied = []
     for local_path, remote_path in zip(local_file_paths, remote_file_paths):
         # for the .py file create the parent directory
         remote_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # TODO maybe check if the file already exists and is the same
+        # then we can skip copying
 
         shutil.copy2(local_path, remote_path)
         remote_files_copied.append(remote_path)
@@ -327,13 +332,11 @@ def upload_raw_ephys_data(
         for local_recording in local_recording_folders
     ]
 
-    remote_recording_folders_already_there = [
-        p for p in remote_recording_folders if p.exists()
-    ]
-    if len(remote_recording_folders_already_there) > 0:
-        raise FileExistsError(
-            f"Remote recording folder(s) already exist: {remote_recording_folders_already_there}"
-        )
+    for local_path, remote_path in zip(local_recording_folders, remote_recording_folders):
+        if remote_path.exists() and not filecmp.dircmp(local_path, remote_path):
+            raise FileExistsError(
+                f"Remote recording folder already exists and is different from the local one: {remote_path}"
+            )
 
     # upload the folders
     for local_path, remote_path in zip(local_recording_folders, remote_recording_folders):
@@ -385,6 +388,13 @@ def upload_raw_videos(
         )
 
     remote_video_folder_path = remote_root / local_video_folder_path.relative_to(local_root)
+
+    if remote_video_folder_path.exists() and not filecmp.dircmp(
+        local_video_folder_path, remote_video_folder_path
+    ):
+        raise FileExistsError(
+            f"Remote video folder already exists and is different from the local one: {remote_video_folder_path}"
+        )
 
     # try copying the video folder
     shutil.copytree(
