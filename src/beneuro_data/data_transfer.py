@@ -139,8 +139,9 @@ def upload_raw_session(
             local_session_path, whitelisted_files_in_root, allowed_extensions_not_in_root
         )
 
+    # TODO maybe check separately to have the option to upload things that are valid
     # check everything we want to upload
-    validate_raw_session(
+    behavior_files, ephys_folder_paths, video_folder_path = validate_raw_session(
         local_session_path,
         subject_name,
         include_behavior,
@@ -186,13 +187,32 @@ def upload_raw_session(
     return True
 
 
+def _validate_local_session_path(
+    local_session_path: Path, local_root: Path, processing_level: str
+) -> None:
+    """
+    1. Make sure the session_path is actually a subdirectory of the local_root.
+    2. Make sure the session_path has processing_level (most likely "raw") in it.
+    """
+    # 1 make sure the session_path is actually a subdirectory of the local_root
+    if not local_session_path.is_relative_to(local_root):
+        raise ValueError(
+            f"Session path is not a subdirectory of the local root: {local_session_path}"
+        )
+    # 2 make sure the session_path has "raw" in it
+    if not (processing_level in local_session_path.parts):
+        raise ValueError(
+            f"Trying to upload a raw session, but the session's path does not contain '{processing_level}': {local_session_path}"
+        )
+
+
 def upload_raw_behavioral_data(
     local_session_path: Path,
     subject_name: str,
     local_root: Path,
     remote_root: Path,
     whitelisted_files_in_root: tuple[str, ...],
-):
+) -> list[Path]:
     """
     Uploads raw behavioral data of a session to the remote server.
 
@@ -211,22 +231,10 @@ def upload_raw_behavioral_data(
 
     Returns
     -------
-    Returns True if the upload was successful, raises an error otherwise.
+    Returns paths to the remote files that were copied.
     """
-    # have to rename first so that validation passes
-    processing_level = "raw"
-    remote_folders_created = []
+    _validate_local_session_path(local_session_path, local_root, "raw")
 
-    # 0.1 make sure the session_path is actually a subdirectory of the local_root
-    if not local_session_path.is_relative_to(local_root):
-        raise ValueError(
-            f"Session path is not a subdirectory of the local root: {local_session_path}"
-        )
-    # 0.2 make sure the session_path has "raw" in it
-    if not ("raw" in local_session_path.parts):
-        raise ValueError(
-            f"Trying to upload a raw session, but the session's path does not contain 'raw': {local_session_path}"
-        )
     # 1. make sure locally the things are valid
     # TODO how about this one returning a dataclass with some diagnostics like pycontrol folder exists or not?
     local_file_paths = validate_raw_behavioral_data_of_session(
@@ -248,46 +256,14 @@ def upload_raw_behavioral_data(
         if remote_path.exists():
             raise FileExistsError(f"Remote file already exists: {remote_path}")
 
-    # 3. if not, create the subject directory if needed
-    remote_subject_dir = remote_root / processing_level / subject_name
-    if not remote_subject_dir.exists():
-        sync_subject_dir(subject_name, processing_level, local_root, remote_root)
-        remote_folders_created.append(remote_subject_dir)
-
-    # if it doesn't exist, create the session's remote directory
-    if not remote_session_path.exists():
-        remote_session_path.mkdir()
-        remote_folders_created.append(remote_session_path)
-
     # 4. copy files in order
-    files_already_copied = []
+    remote_files_copied = []
     for local_path, remote_path in zip(local_file_paths, remote_file_paths):
-        try:
-            # for the .py file create the parent directory
-            if not remote_path.parent.exists():
-                assert remote_path.parent.is_relative_to(remote_session_path)
-                remote_path.parent.mkdir()
+        # for the .py file create the parent directory
+        remote_path.parent.mkdir(parents=True, exist_ok=True)
 
-            shutil.copy2(local_path, remote_path)
-            files_already_copied.append(remote_path)
-        except:
-            print(
-                f"Error copying {local_path} to {remote_path}. Rolling back changes made so far."
-            )
-            for p in files_already_copied:
-                try:
-                    p.unlink()
-                except:
-                    pass
-            for p in remote_folders_created:
-                try:
-                    shutil.rmtree(p)
-                except:
-                    pass
-
-            raise RuntimeError(
-                f"Error uploading raw behavioral data from {local_session_path}.\nSee stacktrace above."
-            )
+        shutil.copy2(local_path, remote_path)
+        remote_files_copied.append(remote_path)
 
     # 5. check that the files are there and they are identical
     remote_file_paths_there = validate_raw_behavioral_data_of_session(
@@ -302,7 +278,7 @@ def upload_raw_behavioral_data(
             f"Something went wrong during uploading raw behavioral data for session {local_session_path}"
         )
 
-    return True
+    return remote_files_copied
 
 
 def upload_raw_ephys_data(
@@ -311,7 +287,7 @@ def upload_raw_ephys_data(
     local_root: Path,
     remote_root: Path,
     allowed_extensions_not_in_root: tuple[str, ...],
-) -> bool:
+) -> list[Path]:
     """
     Uploads raw electrophysiology data of a session to the remote server.
 
@@ -332,68 +308,44 @@ def upload_raw_ephys_data(
 
     Returns
     -------
-    Returns True if the upload was successful, raises an error otherwise.
+    Returns a list of the remote folders that were created.
     """
-    # have to rename first so that validation passes
-    processing_level = "raw"
-    remote_folders_created = []
-
-    # 0.1 make sure the session_path is actually a subdirectory of the local_root
-    if not local_session_path.is_relative_to(local_root):
-        raise ValueError(
-            f"Session path is not a subdirectory of the local root: {local_session_path}"
-        )
-    # 0.2 make sure the session_path has "raw" in it
-    if not ("raw" in local_session_path.parts):
-        raise ValueError(
-            f"Trying to upload a raw session, but the session's path does not contain 'raw': {local_session_path}"
-        )
+    _validate_local_session_path(local_session_path, local_root, "raw")
 
     # make sure locally the things are valid
-    local_recording_folder_paths = validate_raw_ephys_data_of_session(
+    local_recording_folders = validate_raw_ephys_data_of_session(
         local_session_path, subject_name, allowed_extensions_not_in_root
     )
-    if len(local_recording_folder_paths) == 0:
+    if len(local_recording_folders) == 0:
         raise FileNotFoundError(
             f"Trying to upload raw ephys data but no recordings found in session {local_session_path}"
         )
 
     # 2. check if there are remote files already
-    remote_session_path = remote_root / local_session_path.relative_to(local_root)
-    spikeglx_recording_folder_pathlib_pattern = "*_g?"
-    remote_recording_folder_paths_already_there = list(
-        remote_session_path.glob(spikeglx_recording_folder_pathlib_pattern)
-    )
-    if len(remote_recording_folder_paths_already_there) > 0:
-        raise FileExistsError(
-            f"Remote recording folders already exist: {remote_recording_folder_paths_already_there}"
-        )
-
-    remote_recording_folder_paths = [
-        remote_session_path / local_recording.relative_to(local_session_path)
-        for local_recording in local_recording_folder_paths
+    remote_recording_folders = [
+        remote_root / local_recording.relative_to(local_root)
+        for local_recording in local_recording_folders
     ]
 
-    remote_folders_created = []
-    for local_path, remote_path in zip(
-        local_recording_folder_paths, remote_recording_folder_paths
-    ):
-        try:
-            shutil.copytree(local_path, remote_path, copy_function=shutil.copy2)
-            remote_folders_created.append(remote_path)
-        except:
-            print(
-                f"Error copying {local_path} to {remote_path}. Rolling back changes made so far."
-            )
+    remote_recording_folders_already_there = [
+        p for p in remote_recording_folders if p.exists()
+    ]
+    if len(remote_recording_folders_already_there) > 0:
+        raise FileExistsError(
+            f"Remote recording folder(s) already exist: {remote_recording_folders_already_there}"
+        )
 
-            for p in remote_folders_created:
-                shutil.rmtree(p)
+    # upload the folders
+    for local_path, remote_path in zip(local_recording_folders, remote_recording_folders):
+        shutil.copytree(local_path, remote_path, copy_function=shutil.copy2)
 
-            raise RuntimeError(
-                f"Error uploading raw ephys data from {local_session_path}.\nSee stacktrace above."
-            )
+    # check that the files are there and valid
+    remote_session_path = remote_root / local_session_path.relative_to(local_root)
+    remote_recording_folders = validate_raw_ephys_data_of_session(
+        remote_session_path, subject_name, allowed_extensions_not_in_root
+    )
 
-    return True
+    return remote_recording_folders
 
 
 def upload_raw_videos(
@@ -401,7 +353,7 @@ def upload_raw_videos(
     subject_name: str,
     local_root: Path,
     remote_root: Path,
-) -> bool:
+) -> Path:
     """
     Uploads videos of a session to the remote server.
 
@@ -418,27 +370,9 @@ def upload_raw_videos(
 
     Returns
     -------
-    Returns True if the upload was successful, raises an error otherwise.
+    Path to the remote video folder.
     """
-    # have to rename first so that validation passes
-    processing_level = "raw"
-
-    # figure out video folder name
-    # look if there is a video folder locally
-    # check if there is a video folder remotely
-    # upload if needed
-
-    # before that make sure that we're getting something "raw"
-    # 0.1 make sure the session_path is actually a subdirectory of the local_root
-    if not local_session_path.is_relative_to(local_root):
-        raise ValueError(
-            f"Session path is not a subdirectory of the local root: {local_session_path}"
-        )
-    # 0.2 make sure the session_path has "raw" in it
-    if not ("raw" in local_session_path.parts):
-        raise ValueError(
-            f"Trying to upload a raw session, but the session's path does not contain 'raw': {local_session_path}"
-        )
+    _validate_local_session_path(local_session_path, local_root, "raw")
 
     # validate that there are local videos
     local_video_folder_path = validate_raw_videos_of_session(
@@ -450,46 +384,29 @@ def upload_raw_videos(
             f"Trying to upload raw videos but no video folder found in session {local_session_path}"
         )
 
-    remote_folders_created = []
-
-    # check if there are remote files already
-    remote_session_path = remote_root / local_session_path.relative_to(local_root)
     remote_video_folder_path = remote_root / local_video_folder_path.relative_to(local_root)
 
-    remote_subject_dir = remote_root / processing_level / subject_name
-    if not remote_subject_dir.exists():
-        sync_subject_dir(subject_name, processing_level, local_root, remote_root)
-        remote_folders_created.append(remote_subject_dir)
-
-    if not remote_session_path.exists():
-        remote_session_path.mkdir()
-        remote_folders_created.append(remote_session_path)
-
     # try copying the video folder
-    try:
-        shutil.copytree(
-            local_video_folder_path, remote_video_folder_path, copy_function=shutil.copy2
+    shutil.copytree(
+        local_video_folder_path, remote_video_folder_path, copy_function=shutil.copy2
+    )
+
+    # check that the folder is there and valid
+    remote_session_path = remote_root / local_session_path.relative_to(local_root)
+    remote_video_folder_found = validate_raw_videos_of_session(
+        remote_session_path, subject_name
+    )
+
+    if remote_video_folder_found is None:
+        raise FileNotFoundError(
+            "Something went wrong during uploading raw videos. Data not found on the server."
         )
-    # clean up if it fails
-    except:
-        # remove the remote video folder
-        try:
-            shutil.rmtree(remote_video_folder_path)
-        except:
-            pass
-
-        # remove the other folders we created along the way
-        for p in remote_folders_created:
-            try:
-                shutil.rmtree(p)
-            except:
-                pass
-
+    if remote_video_folder_found != remote_video_folder_path:
         raise RuntimeError(
-            f"Error uploading raw videos from {local_session_path}.\nSee stacktrace above."
+            "Something went wrong during uploading raw videos. Data found on the server is not the same as what was uploaded."
         )
 
-    return True
+    return remote_video_folder_found
 
 
 def upload_extra_files(
@@ -501,7 +418,7 @@ def upload_extra_files(
     allowed_extensions_not_in_root: tuple[str, ...],
 ) -> bool:
     """
-    Uploads extra files such as comment.txt, traj_plan.txt, etc. to the remote server.
+    Renames and uploads extra files such as comment.txt, traj_plan.txt, etc. to the remote server.
 
     Parameters
     ----------
@@ -524,16 +441,13 @@ def upload_extra_files(
     -------
     Returns True if the upload was successful, raises an error otherwise.
     """
+    # 0. rename extra files first
     # have to rename first so that validation passes
-    remote_session_path = remote_root / local_session_path.relative_to(local_root)
-
-    # TODO have an option to rename the extra files or not?
-    # rename extra files first
     rename_extra_files_in_session(
         local_session_path, whitelisted_files_in_root, allowed_extensions_not_in_root
     )
 
-    # 1. rename whitelisted files
+    # 1. find whitelisted files
     whitelisted_paths_in_root = _find_whitelisted_files_in_root(
         local_session_path, whitelisted_files_in_root
     )
@@ -545,16 +459,18 @@ def upload_extra_files(
             _find_extra_files_with_extension(local_session_path, extension)
         )
 
-    # 4. copy the files to the server
+    # 3. copy the files to the server
+    remote_files_copied = []
     for local_path in whitelisted_paths_in_root + extra_files_with_allowed_extensions:
-        remote_path = remote_session_path / local_path.relative_to(local_session_path)
+        remote_path = remote_root / local_path.relative_to(local_root)
         if remote_path.exists():
             # it was most likely already copied when copying the recording folders
-            print(f"Skipping copying because emote file already exists: {remote_path}")
+            print(f"Skipping copying because remote file already exists: {remote_path}")
             continue
         shutil.copy2(local_path, remote_path)
+        remote_files_copied.append(remote_path)
 
-    return True
+    return remote_files_copied
 
 
 # NOTE This will fail, but it's expected and should be rewritten
