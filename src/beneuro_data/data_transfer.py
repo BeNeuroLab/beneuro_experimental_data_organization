@@ -2,6 +2,7 @@ import filecmp
 import shutil
 from pathlib import Path
 from typing import Union
+import warnings
 
 from beneuro_data.data_validation import (
     validate_raw_behavioral_data_of_session,
@@ -580,7 +581,6 @@ def upload_extra_files(
     return remote_file_paths
 
 
-# NOTE This will fail, but it's expected and should be rewritten
 def download_raw_session(
     remote_session_path: Path,
     subject_name: str,
@@ -590,29 +590,135 @@ def download_raw_session(
     include_ephys: bool,
     include_videos: bool,
     whitelisted_files_in_root: tuple[str, ...],
+    allowed_extensions_not_in_root: tuple[str, ...],
 ):
+    remote_behavior_files = []
+    remote_ephys_folder_paths = []
+    remote_video_folder_path = None
+    remote_extra_files = []
+
     # check what data the session has on the server
-    behavior_files, ephys_folder_paths, video_folder_path = validate_raw_session(
-        remote_session_path, subject_name, True, True, True, whitelisted_files_in_root
+    if include_behavior:
+        try:
+            remote_behavior_files = validate_raw_behavioral_data_of_session(
+                remote_session_path,
+                subject_name,
+                whitelisted_files_in_root,
+                warn_if_no_pycontrol_py_folder=False,
+            )
+
+            local_behavior_files = _source_to_dest(
+                remote_behavior_files, remote_base_path, local_base_path
+            )
+
+            _check_list_of_files_before_copy(
+                remote_behavior_files,
+                local_behavior_files,
+                "error_if_different",
+            )
+        except Exception as e:
+            warnings.warn(f"Skipping behavioral data because of: {type(e).__name__}: {e}")
+            include_behavior = False
+
+    if include_ephys:
+        try:
+            remote_ephys_folder_paths = validate_raw_ephys_data_of_session(
+                remote_session_path, subject_name, allowed_extensions_not_in_root
+            )
+
+            remote_ephys_files = [
+                p
+                for recording_folder in remote_ephys_folder_paths
+                for p in recording_folder.glob("**/*")
+                if p.is_file()
+            ]
+            local_ephys_files = _source_to_dest(
+                remote_ephys_files, remote_base_path, local_base_path
+            )
+
+            _check_list_of_files_before_copy(
+                remote_ephys_files,
+                local_ephys_files,
+                "error_if_different",
+            )
+        except Exception as e:
+            warnings.warn(f"Skipping ephys data because of: {type(e).__name__}: {e}")
+            include_ephys = False
+
+    if include_videos:
+        try:
+            remote_video_folder_path = validate_raw_videos_of_session(
+                remote_session_path,
+                subject_name,
+                warn_if_no_video_folder=False,
+            )
+
+            remote_video_files = [
+                p for p in remote_video_folder_path.glob("**/*") if p.is_file()
+            ]
+            local_video_files = _source_to_dest(
+                remote_video_files, remote_base_path, local_base_path
+            )
+
+            _check_list_of_files_before_copy(
+                remote_video_files,
+                local_video_files,
+                "error_if_different",
+            )
+        except Exception as e:
+            warnings.warn(f"Skipping videos because of: {type(e).__name__}: {e}")
+            include_videos = False
+
+    try:
+        remote_extra_files_not_in_root = _find_extra_files_with_extensions(
+            remote_session_path, allowed_extensions_not_in_root
+        )
+        remote_extra_files_in_root = _find_whitelisted_files_in_root(
+            remote_session_path, whitelisted_files_in_root
+        )
+        remote_extra_files = remote_extra_files_not_in_root + remote_extra_files_in_root
+
+        local_extra_files = _source_to_dest(
+            remote_extra_files, remote_base_path, local_base_path
+        )
+
+        _check_list_of_files_before_copy(
+            remote_extra_files, local_extra_files, "error_if_different"
+        )
+
+        include_extra_files = True
+    except Exception as e:
+        warnings.warn(f"Skipping extra files because of: {type(e).__name__}: {e}")
+        include_extra_files = False
+
+    include_behavior = include_behavior and len(remote_behavior_files) > 0
+    include_ephys = include_ephys and len(remote_ephys_folder_paths) > 0
+    include_videos = include_videos and remote_video_folder_path is not None
+    include_extra_files = include_extra_files and len(remote_extra_files) > 0
+
+    if include_behavior:
+        _copy_list_of_files(
+            remote_behavior_files, local_behavior_files, "error_if_different"
+        )
+    if include_ephys:
+        _copy_list_of_files(remote_ephys_files, local_ephys_files, "error_if_different")
+    if include_videos:
+        _copy_list_of_files(remote_video_files, local_video_files, "error_if_different")
+    if include_extra_files:
+        _copy_list_of_files(remote_extra_files, local_extra_files, "error_if_different")
+
+    local_session_path = _source_to_dest(
+        remote_session_path, remote_base_path, local_base_path
     )
 
-    include_behavior = include_behavior and len(behavior_files) > 0
-    include_ephys = include_ephys and len(ephys_folder_paths) > 0
-    include_videos = include_videos and video_folder_path is not None
-
-    # downloading is just uploading the other way around
-    upload_raw_session(
-        remote_session_path,
+    validate_raw_session(
+        local_session_path,
         subject_name,
-        # config.REMOTE_PATH,
-        # config.LOCAL_PATH,
-        remote_base_path,
-        local_base_path,
         include_behavior,
         include_ephys,
         include_videos,
+        whitelisted_files_in_root,
+        allowed_extensions_not_in_root,
     )
-
-    local_session_path = local_base_path / remote_session_path.relative_to(remote_base_path)
 
     return local_session_path
