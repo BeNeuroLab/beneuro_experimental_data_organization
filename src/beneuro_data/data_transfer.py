@@ -1,7 +1,7 @@
 import filecmp
 import shutil
 from pathlib import Path
-import warnings
+from typing import Union
 
 from beneuro_data.data_validation import (
     validate_raw_behavioral_data_of_session,
@@ -16,6 +16,35 @@ from beneuro_data.extra_file_handling import (
 )
 from beneuro_data.validate_argument import validate_argument
 from beneuro_data.video_renaming import rename_raw_videos_of_session
+
+
+def _source_to_dest(
+    source_paths: Union[Path, list[Path]], source_root: Path, dest_root: Path
+) -> Union[Path, list[Path]]:
+    """
+    Determine the destination path for a local path or a list of local paths.
+
+    Parameters
+    ----------
+    source_paths : Union[Path, list[Path]]
+        The source path or a list of source paths.
+    source_root : Path
+        The root directory of the source paths.
+    dest_root : Path
+        The root directory of the destination paths.
+        Should be at the same level as the source_root.
+
+    Returns
+    -------
+    If source_paths is a Path, returns the destination path.
+    If source_paths is a list of Paths, returns a list of destination paths.
+    """
+    if isinstance(source_paths, Path):
+        return dest_root / source_paths.relative_to(source_root)
+    elif isinstance(source_paths, list):
+        return [dest_root / p.relative_to(source_root) for p in source_paths]
+    else:
+        raise ValueError(f"Invalid type for source_paths: {type(source_paths)}")
 
 
 @validate_argument("processing_level", ["raw", "processed"])
@@ -247,12 +276,8 @@ def upload_raw_behavioral_data(
     )
 
     # 2. check if there are remote files already
-    remote_session_path = remote_root / local_session_path.relative_to(local_root)
-
-    remote_file_paths = [
-        remote_session_path / local_path.relative_to(local_session_path)
-        for local_path in local_file_paths
-    ]
+    remote_session_path = _source_to_dest(local_session_path, local_root, remote_root)
+    remote_file_paths = _source_to_dest(local_file_paths, local_root, remote_root)
 
     _check_list_of_files_before_copy(
         local_file_paths, remote_file_paths, "error_if_different"
@@ -324,10 +349,7 @@ def upload_raw_ephys_data(
         if p.is_file()
     ]
 
-    remote_file_paths = [
-        remote_root / local_file_path.relative_to(local_root)
-        for local_file_path in local_file_paths
-    ]
+    remote_file_paths = _source_to_dest(local_file_paths, local_root, remote_root)
 
     _check_list_of_files_before_copy(
         local_file_paths, remote_file_paths, "error_if_different"
@@ -336,9 +358,10 @@ def upload_raw_ephys_data(
     _copy_list_of_files(local_file_paths, remote_file_paths, "error_if_different")
 
     # check that the files are there and valid
-    remote_session_path = remote_root / local_session_path.relative_to(local_root)
     remote_recording_folders = validate_raw_ephys_data_of_session(
-        remote_session_path, subject_name, allowed_extensions_not_in_root
+        _source_to_dest(local_session_path, local_root, remote_root),
+        subject_name,
+        allowed_extensions_not_in_root,
     )
 
     return remote_recording_folders
@@ -380,33 +403,24 @@ def upload_raw_videos(
             f"Trying to upload raw videos but no video folder found in session {local_session_path}"
         )
 
-    remote_video_folder_path = remote_root / local_video_folder_path.relative_to(local_root)
+    local_file_paths = [p for p in local_video_folder_path.glob("**/*") if p.is_file()]
+    remote_file_paths = _source_to_dest(local_file_paths, local_root, remote_root)
 
-    if remote_video_folder_path.exists() and not filecmp.dircmp(
-        local_video_folder_path, remote_video_folder_path
-    ):
-        raise FileExistsError(
-            f"Remote video folder already exists and is different from the local one: {remote_video_folder_path}"
-        )
-
-    # try copying the video folder
-    shutil.copytree(
-        local_video_folder_path, remote_video_folder_path, copy_function=shutil.copy2
+    _check_list_of_files_before_copy(
+        local_file_paths, remote_file_paths, "error_if_different"
     )
 
+    _copy_list_of_files(local_file_paths, remote_file_paths, "error_if_different")
+
     # check that the folder is there and valid
-    remote_session_path = remote_root / local_session_path.relative_to(local_root)
     remote_video_folder_found = validate_raw_videos_of_session(
-        remote_session_path, subject_name
+        _source_to_dest(local_session_path, local_root, remote_root),
+        subject_name,
     )
 
     if remote_video_folder_found is None:
         raise FileNotFoundError(
             "Something went wrong during uploading raw videos. Data not found on the server."
-        )
-    if remote_video_folder_found != remote_video_folder_path:
-        raise RuntimeError(
-            "Something went wrong during uploading raw videos. Data found on the server is not the same as what was uploaded."
         )
 
     return remote_video_folder_found
@@ -461,11 +475,9 @@ def upload_extra_files(
     )
 
     local_file_paths = whitelisted_paths_in_root + extra_files_with_allowed_extensions
+    remote_file_paths = _source_to_dest(local_file_paths, local_root, remote_root)
 
     # 3. copy the files to the server
-    remote_file_paths = [
-        remote_root / local_path.relative_to(local_root) for local_path in local_file_paths
-    ]
     _copy_list_of_files(local_file_paths, remote_file_paths, "error_if_different")
 
     return remote_file_paths
