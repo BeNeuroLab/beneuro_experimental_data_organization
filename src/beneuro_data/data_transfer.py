@@ -47,6 +47,103 @@ def _source_to_dest(
         raise ValueError(f"Invalid type for source_paths: {type(source_paths)}")
 
 
+def _copy_list_of_files(
+    source_file_paths: list[Path], dest_file_paths: list[Path], if_exists: str
+):
+    """
+    Copies a list of files from one directory to another.
+
+    Parameters
+    ----------
+    source_file_paths : list[Path]
+        List of paths to the source files.
+    dest_file_paths : list[Path]
+        List of paths where the files will be copied to.
+    if_exists: str
+        Behavior when the file already exists. Can be one of:
+            - "overwrite": Overwrite the file.
+            - "skip": Skip the file.
+            - "error_if_different": Raise an error if the file is different.
+            - "error": Raise an error.
+    """
+    for source_path, dest_path in zip(source_file_paths, dest_file_paths):
+        # create the parent directory if it doesn't exist
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # if the file doesn't exist, copy it and move to the next one
+        if not dest_path.exists():
+            shutil.copy2(source_path, dest_path)
+            continue
+
+        # handle the case when the file exists
+        if if_exists == "overwrite":
+            shutil.copy2(source_path, dest_path)
+
+        elif if_exists == "skip":
+            continue
+
+        elif if_exists == "error_if_different":
+            # compare based on content
+            if filecmp.cmp(source_path, dest_path, shallow=False):
+                continue
+
+            raise FileExistsError(f"File already exists and is different: {dest_path}")
+
+        elif if_exists == "error":
+            raise FileExistsError(f"File already exists: {dest_path}")
+
+        else:
+            raise ValueError(f"Invalid value for if_exists: {if_exists}")
+
+
+def _check_list_of_files_before_copy(
+    source_file_paths: list[Path], dest_file_paths: list[Path], if_exists: str
+):
+    """
+    Check if the files can be copied before calling _copy_list_of_files.
+
+    Parameters
+    ----------
+    source_file_paths : list[Path]
+        List of paths to the source files.
+    dest_file_paths : list[Path]
+        List of paths where the files will be copied to.
+    if_exists: str
+        Behavior when the file already exists. Can be one of:
+            - "error": Raise an error.
+            - "error_if_different": Raise an error if a file is different.
+            - "overwrite": Overwriting should always work.
+            - "skip": Skipping should always work.
+    """
+    for source_path, dest_path in zip(source_file_paths, dest_file_paths):
+        # if the destination file doesn't exist, copying will be fine
+        if not dest_path.exists():
+            continue
+
+        # handle the case when the file exists
+
+        # overwriting should always work
+        if if_exists == "overwrite":
+            continue
+
+        # skipping should always work
+        elif if_exists == "skip":
+            continue
+
+        # if the file is different, raise an error
+        elif if_exists == "error_if_different":
+            # compare based on content
+            if filecmp.cmp(source_path, dest_path, shallow=False):
+                continue
+            raise FileExistsError(f"File already exists and is different: {dest_path}")
+
+        elif if_exists == "error":
+            raise FileExistsError(f"File already exists: {dest_path}")
+
+        else:
+            raise ValueError(f"Invalid value for if_exists: {if_exists}")
+
+
 @validate_argument("processing_level", ["raw", "processed"])
 def sync_subject_dir(
     subject_name: str, processing_level: str, local_root: Path, remote_root: Path
@@ -481,103 +578,6 @@ def upload_extra_files(
     _copy_list_of_files(local_file_paths, remote_file_paths, "error_if_different")
 
     return remote_file_paths
-
-
-def _copy_list_of_files(
-    source_file_paths: list[Path], dest_file_paths: list[Path], if_exists: str
-):
-    """
-    Copies a list of files from one directory to another.
-
-    Parameters
-    ----------
-    source_file_paths : list[Path]
-        List of paths to the source files.
-    dest_file_paths : list[Path]
-        List of paths where the files will be copied to.
-    if_exists: str
-        Behavior when the file already exists. Can be one of:
-            - "overwrite": Overwrite the file.
-            - "skip": Skip the file.
-            - "error_if_different": Raise an error if the file is different.
-            - "error": Raise an error.
-    """
-    for source_path, dest_path in zip(source_file_paths, dest_file_paths):
-        # create the parent directory if it doesn't exist
-        dest_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # if the file doesn't exist, copy it and move to the next one
-        if not dest_path.exists():
-            shutil.copy2(source_path, dest_path)
-            continue
-
-        # handle the case when the file exists
-        if if_exists == "overwrite":
-            shutil.copy2(source_path, dest_path)
-
-        elif if_exists == "skip":
-            continue
-
-        elif if_exists == "error_if_different":
-            # compare based on content
-            if filecmp.cmp(source_path, dest_path, shallow=False):
-                continue
-
-            raise FileExistsError(f"File already exists and is different: {dest_path}")
-
-        elif if_exists == "error":
-            raise FileExistsError(f"File already exists: {dest_path}")
-
-        else:
-            raise ValueError(f"Invalid value for if_exists: {if_exists}")
-
-
-def _check_list_of_files_before_copy(
-    source_file_paths: list[Path], dest_file_paths: list[Path], if_exists: str
-):
-    """
-    Check if the files can be copied before calling _copy_list_of_files.
-
-    Parameters
-    ----------
-    source_file_paths : list[Path]
-        List of paths to the source files.
-    dest_file_paths : list[Path]
-        List of paths where the files will be copied to.
-    if_exists: str
-        Behavior when the file already exists. Can be one of:
-            - "error": Raise an error.
-            - "error_if_different": Raise an error if a file is different.
-            - "overwrite": Overwriting should always work.
-            - "skip": Skipping should always work.
-    """
-    for source_path, dest_path in zip(source_file_paths, dest_file_paths):
-        # if the destination file doesn't exist, copying will be fine
-        if not dest_path.exists():
-            continue
-
-        # handle the case when the file exists
-
-        # overwriting should always work
-        if if_exists == "overwrite":
-            continue
-
-        # skipping should always work
-        elif if_exists == "skip":
-            continue
-
-        # if the file is different, raise an error
-        elif if_exists == "error_if_different":
-            # compare based on content
-            if filecmp.cmp(source_path, dest_path, shallow=False):
-                continue
-            raise FileExistsError(f"File already exists and is different: {dest_path}")
-
-        elif if_exists == "error":
-            raise FileExistsError(f"File already exists: {dest_path}")
-
-        else:
-            raise ValueError(f"Invalid value for if_exists: {if_exists}")
 
 
 # NOTE This will fail, but it's expected and should be rewritten
