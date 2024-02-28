@@ -317,20 +317,23 @@ def upload_raw_ephys_data(
         )
 
     # 2. check if there are remote files already
-    remote_recording_folders = [
-        remote_root / local_recording.relative_to(local_root)
-        for local_recording in local_recording_folders
+    local_file_paths = [
+        p
+        for recording_folder in local_recording_folders
+        for p in recording_folder.glob("**/*")
+        if p.is_file()
     ]
 
-    for local_path, remote_path in zip(local_recording_folders, remote_recording_folders):
-        if remote_path.exists() and not filecmp.dircmp(local_path, remote_path):
-            raise FileExistsError(
-                f"Remote recording folder already exists and is different from the local one: {remote_path}"
-            )
+    remote_file_paths = [
+        remote_root / local_file_path.relative_to(local_root)
+        for local_file_path in local_file_paths
+    ]
 
-    # upload the folders
-    for local_path, remote_path in zip(local_recording_folders, remote_recording_folders):
-        shutil.copytree(local_path, remote_path, copy_function=shutil.copy2)
+    _check_list_of_files_before_copy(
+        local_file_paths, remote_file_paths, "error_if_different"
+    )
+
+    _copy_list_of_files(local_file_paths, remote_file_paths, "error_if_different")
 
     # check that the files are there and valid
     remote_session_path = remote_root / local_session_path.relative_to(local_root)
