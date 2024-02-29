@@ -252,13 +252,13 @@ def upload_raw_ephys_data(
     _copy_list_of_files(local_file_paths, remote_file_paths, if_exists)
 
     # check that the files are there and valid
-    remote_recording_folders = validate_raw_ephys_data_of_session(
+    remote_files_found = validate_raw_ephys_data_of_session(
         _source_to_dest(local_session_path, local_root, remote_root),
         subject_name,
         allowed_extensions_not_in_root,
     )
 
-    return remote_recording_folders
+    return remote_files_found
 
 
 def upload_raw_videos(

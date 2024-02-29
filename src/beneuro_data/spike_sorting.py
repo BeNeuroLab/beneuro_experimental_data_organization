@@ -11,7 +11,7 @@ except ImportError as e:
         "Could not import spike sorting functionality. You might want to reinstall bnd with `poetry install --with processing`"
     ) from e
 
-from beneuro_data.data_validation import validate_raw_ephys_data_of_session
+from beneuro_data.data_validation import validate_raw_ephys_data_of_session, _find_spikeglx_recording_folders_in_session
 
 
 def run_kilosort_on_stream(
@@ -135,7 +135,7 @@ def get_ap_stream_names(recording_path: Path) -> list[str]:
 def run_kilosort_on_recording_and_save_in_processed(
     raw_recording_path: Path,
     base_path: Path,
-    stream_names_to_process: Optional[tuple[str, ...]] = None,
+    stream_names_to_process: Optional[list[str]] = None,
     clean_up_temp_files: bool = False,
     verbose: bool = False,
 ) -> None:
@@ -184,15 +184,19 @@ def run_kilosort_on_recording_and_save_in_processed(
         processed_session_path / f"{session_folder_name}_ephys" / recording_folder_name
     )
 
+    # if they are not explicitly given, figure out the AP streams ~ probes, e.g. imec0.ap
     if stream_names_to_process is None:
         stream_names_to_process = get_ap_stream_names(raw_recording_path)
 
+    # make sure that the recording contains those streams
+    # can catch typos or missing probes when stream names are explicitly given
     for stream_name in stream_names_to_process:
         if stream_name not in get_ap_stream_names(raw_recording_path):
             raise ValueError(
                 f"Probe {stream_name} is not in recording's AP streams. Found {get_ap_stream_names(raw_recording_path)}"
             )
 
+    # run kilosort for all probes in the recording
     for ap_stream_name in stream_names_to_process:
         probe_name = ap_stream_name.split(".")[0]
 
@@ -216,7 +220,7 @@ def run_kilosort_on_session_and_save_in_processed(
     subject_name: str,
     base_path: Path,
     allowed_extensions_not_in_root: tuple[str, ...],
-    stream_names_to_process: Optional[tuple[str, ...]] = None,
+    stream_names_to_process: Optional[list[str]] = None,
     clean_up_temp_files: bool = False,
     verbose: bool = False,
 ) -> None:
@@ -250,9 +254,13 @@ def run_kilosort_on_session_and_save_in_processed(
     if isinstance(raw_session_path, str):
         raw_session_path = Path(raw_session_path)
 
-    ephys_recording_folders = validate_raw_ephys_data_of_session(
+    # validate ephys data before spike sorting
+    _ = validate_raw_ephys_data_of_session(
         raw_session_path, subject_name, allowed_extensions_not_in_root
     )
+
+    # get the actual folders because validate_raw_ephys_data_of_session returns a list of files
+    ephys_recording_folders = _find_spikeglx_recording_folders_in_session(raw_session_path)
 
     for recording_path in ephys_recording_folders:
         if verbose:
