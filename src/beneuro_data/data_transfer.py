@@ -95,7 +95,7 @@ def upload_raw_session(
 
     # TODO maybe check separately to have the option to upload things that are valid
     # check everything we want to upload
-    behavior_files, ephys_folder_paths, video_folder_path = validate_raw_session(
+    behavior_files, ephys_files, video_files = validate_raw_session(
         local_session_path,
         subject_name,
         include_behavior,
@@ -311,17 +311,17 @@ def upload_raw_videos(
     _copy_list_of_files(local_file_paths, remote_file_paths, if_exists)
 
     # check that the folder is there and valid
-    remote_video_folder_found = validate_raw_videos_of_session(
+    remote_video_files_found = validate_raw_videos_of_session(
         _source_to_dest(local_session_path, local_root, remote_root),
         subject_name,
     )
 
-    if remote_video_folder_found is None:
+    if len(remote_video_files_found) == 0:
         raise FileNotFoundError(
             "Something went wrong during uploading raw videos. Data not found on the server."
         )
 
-    return remote_video_folder_found
+    return remote_video_files_found
 
 
 def upload_extra_files(
