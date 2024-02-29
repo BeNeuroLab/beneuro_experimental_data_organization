@@ -416,6 +416,7 @@ def download_raw_session(
                 local_base_path,
                 whitelisted_files_in_root,
                 if_exists,
+                warn_if_no_pycontrol_py_folder=False,
             )
         except Exception as e:
             warnings.warn(f"Skipping behavioral data because of: {type(e).__name__}: {e}")
