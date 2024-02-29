@@ -292,7 +292,7 @@ def upload_raw_videos(
     # validate that there are local videos
     local_file_paths = validate_raw_videos_of_session(local_session_path, subject_name)
 
-    if local_file_paths is None:
+    if len(local_file_paths) == 0:
         raise FileNotFoundError(
             f"Trying to upload raw videos but no video folder found in session {local_session_path}"
         )
@@ -397,8 +397,8 @@ def download_raw_session(
 
     """
     remote_behavior_files = []
-    remote_ephys_folder_paths = []
-    remote_video_folder_path = None
+    remote_ephys_files = []
+    remote_video_files = []
     remote_extra_files = []
 
     if_exists = "error_if_different"
@@ -465,10 +465,22 @@ def download_raw_session(
         warnings.warn(f"Skipping extra files because of: {type(e).__name__}: {e}")
         include_extra_files = False
 
-    include_behavior = include_behavior and len(remote_behavior_files) > 0
-    include_ephys = include_ephys and len(remote_ephys_folder_paths) > 0
-    include_videos = include_videos and remote_video_folder_path is not None
-    include_extra_files = include_extra_files and len(remote_extra_files) > 0
+    if include_behavior and len(remote_behavior_files) == 0:
+        warnings.warn("Skipping behavioral data because it was not found. ")
+        include_behavior = False
+
+    if include_ephys and len(remote_ephys_files) == 0:
+        warnings.warn("Skipping ephys data because it was not found. ")
+        include_ephys = False
+
+    if include_videos and len(remote_video_files) == 0:
+        warnings.warn("Skipping videos because they were not found. ")
+        include_videos = False
+
+    if include_extra_files and len(remote_extra_files) == 0:
+        warnings.warn("Skipping extra files because they were not found. ")
+        include_extra_files = False
+
 
     if include_behavior:
         _copy_list_of_files(remote_behavior_files, local_behavior_files, if_exists)
