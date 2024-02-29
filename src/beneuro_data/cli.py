@@ -20,6 +20,7 @@ from beneuro_data.video_renaming import rename_raw_videos_of_session
 
 app = typer.Typer()
 
+
 @app.command()
 def download_last(
     subject_name: Annotated[
@@ -47,13 +48,13 @@ def download_last(
             help="Download video data or not.",
         ),
     ] = None,
-    #include_extra_files: Annotated[
+    # include_extra_files: Annotated[
     #    bool,
     #    typer.Option(
     #        "--include-extra-files/--ignore-extra-files",
     #        help="Download extra files that are created by the experimenter or other software.",
     #    ),
-    #] = True,
+    # ] = True,
     processing_level: Annotated[
         str, typer.Argument(help="Processing level of the session. raw or processed.")
     ] = "raw",
@@ -92,7 +93,6 @@ def download_last(
     if all([not include_behavior, not include_ephys, not include_videos]):
         raise ValueError("At least one data type must be included.")
 
-
     download_raw_session(
         last_session_path,
         subject_name,
@@ -106,6 +106,7 @@ def download_last(
     )
 
     return True
+
 
 @app.command()
 def download_session(
@@ -129,7 +130,9 @@ def download_session(
     include_ephys: Annotated[
         bool,
         typer.Option(
-            "--include-ephys/--ignore-ephys", help="Download ephys data or not.", prompt=True
+            "--include-ephys/--ignore-ephys",
+            help="Download ephys data or not.",
+            prompt=True,
         ),
     ],
     include_videos: Annotated[
@@ -142,13 +145,13 @@ def download_session(
     ],
     # extra files are always included
     # TODO do we want this to stay this way?
-    #include_extra_files: Annotated[
+    # include_extra_files: Annotated[
     #    bool,
     #    typer.Option(
     #        "--include-extra-files/--ignore-extra-files",
     #        help="Download extra files that are created by the experimenter or other software.",
     #    ),
-    #] = True,
+    # ] = True,
     processing_level: Annotated[
         str, typer.Argument(help="Processing level of the session. raw or processed.")
     ] = "raw",
@@ -180,6 +183,7 @@ def download_session(
     )
 
     return True
+
 
 @app.command()
 def kilosort_session(

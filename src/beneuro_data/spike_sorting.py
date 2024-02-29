@@ -11,7 +11,10 @@ except ImportError as e:
         "Could not import spike sorting functionality. You might want to reinstall bnd with `poetry install --with processing`"
     ) from e
 
-from beneuro_data.data_validation import validate_raw_ephys_data_of_session, _find_spikeglx_recording_folders_in_session
+from beneuro_data.data_validation import (
+    validate_raw_ephys_data_of_session,
+    _find_spikeglx_recording_folders_in_session,
+)
 
 
 def run_kilosort_on_stream(

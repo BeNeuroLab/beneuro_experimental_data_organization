@@ -481,7 +481,6 @@ def download_raw_session(
         warnings.warn("Skipping extra files because they were not found. ")
         include_extra_files = False
 
-
     if include_behavior:
         _copy_list_of_files(remote_behavior_files, local_behavior_files, if_exists)
     if include_ephys:
