@@ -79,54 +79,6 @@ def run_kilosort_on_stream(
     return sorting_KS3
 
 
-def preprocess_recording(
-    recording: se.BaseRecording,
-    verbose: bool = True,
-):
-    """
-    Preprocess a recording before spike sorting.
-    Based on https://spikeinterface.readthedocs.io/en/latest/how_to/analyse_neuropixels.html#preprocess-the-recording
-
-
-    Parameters
-    ----------
-    recording: BaseRecording
-        The recording to preprocess.
-        E.g. SpikeGLX recording you got by calling `si.read_spikeglx()`.
-    verbose: bool
-        Whether to print logging messages.
-
-    Returns
-    -------
-    recording: BaseRecording
-        The preprocessed recording.
-
-    Examples
-    --------
-    >>> recording = si.read_spikeglx(spikeglx_dir, stream_name = 'imec0.ap')
-    >>> preprocessed_recording = preprocess_recording(recording)
-
-    Extra notes
-    -----------
-    - Description of spikeinterface's preprocessing module: https://spikeinterface.readthedocs.io/en/latest/modules/preprocessing.html
-    - All possible preprocessing steps: https://spikeinterface.readthedocs.io/en/latest/api.html#module-spikeinterface.preprocessing
-    - Alternative common preprocessing pipelines we can implement: https://spikeinterface.readthedocs.io/en/latest/modules/preprocessing.html#how-to-implement-ibl-destriping-or-spikeglx-catgt-in-spikeinterface
-    """
-    rec1 = sip.highpass_filter(recording, freq_min=400.0)
-
-    bad_channel_ids, channel_labels = sip.detect_bad_channels(rec1)
-    if verbose:
-        logging.warning(f"bad_channel_ids: {bad_channel_ids}")
-
-    rec2 = rec1.remove_channels(bad_channel_ids)
-
-    rec3 = sip.phase_shift(rec2)
-
-    rec4 = sip.common_reference(rec3, operator="median", reference="global")
-
-    return rec4
-
-
 def get_ap_stream_names(recording_path: Path) -> list[str]:
     """
     Get the names of the AP streams (e.g. "imec0.ap") in a SpikeGLX recording.
@@ -276,3 +228,51 @@ def run_kilosort_on_session_and_save_in_processed(
             clean_up_temp_files,
             verbose,
         )
+
+
+def preprocess_recording(
+    recording: se.BaseRecording,
+    verbose: bool = True,
+):
+    """
+    Preprocess a recording before spike sorting.
+    Based on https://spikeinterface.readthedocs.io/en/latest/how_to/analyse_neuropixels.html#preprocess-the-recording
+
+
+    Parameters
+    ----------
+    recording: BaseRecording
+        The recording to preprocess.
+        E.g. SpikeGLX recording you got by calling `si.read_spikeglx()`.
+    verbose: bool
+        Whether to print logging messages.
+
+    Returns
+    -------
+    recording: BaseRecording
+        The preprocessed recording.
+
+    Examples
+    --------
+    >>> recording = si.read_spikeglx(spikeglx_dir, stream_name = 'imec0.ap')
+    >>> preprocessed_recording = preprocess_recording(recording)
+
+    Extra notes
+    -----------
+    - Description of spikeinterface's preprocessing module: https://spikeinterface.readthedocs.io/en/latest/modules/preprocessing.html
+    - All possible preprocessing steps: https://spikeinterface.readthedocs.io/en/latest/api.html#module-spikeinterface.preprocessing
+    - Alternative common preprocessing pipelines we can implement: https://spikeinterface.readthedocs.io/en/latest/modules/preprocessing.html#how-to-implement-ibl-destriping-or-spikeglx-catgt-in-spikeinterface
+    """
+    rec1 = sip.highpass_filter(recording, freq_min=400.0)
+
+    bad_channel_ids, channel_labels = sip.detect_bad_channels(rec1)
+    if verbose:
+        logging.warning(f"bad_channel_ids: {bad_channel_ids}")
+
+    rec2 = rec1.remove_channels(bad_channel_ids)
+
+    rec3 = sip.phase_shift(rec2)
+
+    rec4 = sip.common_reference(rec3, operator="median", reference="global")
+
+    return rec4
