@@ -8,8 +8,9 @@ from pathlib import Path
 
 import dateutil.tz
 import numpy as np
-from neuroconv.basetemporalalignmentinterface import \
+from neuroconv.basetemporalalignmentinterface import (
     BaseTemporalAlignmentInterface
+)
 from neuroconv.utils import DeepDict, FilePathType
 from pynwb import NWBFile
 from pynwb.behavior import BehavioralEvents, Position, SpatialSeries
@@ -115,7 +116,7 @@ class PyControlInterface(BaseTemporalAlignmentInterface):
             name="Ball position",
             description="(x,y) position as measured by PyControl",
             data=self._get_pos_data(),
-            timestamps=self._get_pos_timestamps().astype(float),
+            timestamps=self._get_pos_timestamps().astype(float) / 1000,
             reference_frame="(0,0) is what?",  # TODO
         )
 
@@ -133,7 +134,7 @@ class PyControlInterface(BaseTemporalAlignmentInterface):
                     for it in self.session.print_data
                     if it.name == print_item
                 ],
-                unit="",
+                unit="ms",
             )
 
         self._add_to_behavior_module(print_events, nwbfile)
@@ -145,7 +146,7 @@ class PyControlInterface(BaseTemporalAlignmentInterface):
             name="behavioral events",
             data=[e.name for e in self.session.events],
             timestamps=[float(e.time) for e in self.session.events],
-            unit="",
+            unit="ms",
         )
 
         self._add_to_behavior_module(behavioral_events, nwbfile)
@@ -179,14 +180,14 @@ class PyControlInterface(BaseTemporalAlignmentInterface):
 
         for state in self.session.states:
             duration = (
-                state.duration
+                state.duration / 1000
                 if state.duration is not None
                 else session_length - state.time
             )
 
             behavioral_states.add_row(
-                start_time=float(state.time),
-                stop_time=float(state.time + duration),
+                start_time=float(state.time) / 1000,
+                stop_time=float(state.time + duration) / 1000,
                 state_name=state.name,
             )
 
