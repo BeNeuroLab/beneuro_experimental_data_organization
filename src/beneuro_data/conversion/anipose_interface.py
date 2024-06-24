@@ -5,14 +5,16 @@ import h5py
 import numpy as np
 import spikeinterface.extractors as se
 from ndx_pose import PoseEstimation, PoseEstimationSeries
-from neuroconv.basetemporalalignmentinterface import \
+from neuroconv.basetemporalalignmentinterface import (
     BaseTemporalAlignmentInterface
+)
 from neuroconv.tools.signal_processing import get_rising_frames_from_ttl
 from neuroconv.utils import DeepDict, FilePathType
 from pynwb import NWBFile
 
-from beneuro_data.data_validation import \
+from beneuro_data.data_validation import (
     _find_spikeglx_recording_folders_in_session
+)
 from beneuro_data.spike_sorting import get_ap_stream_names
 
 DEFAULT_FPS = 100
@@ -95,6 +97,7 @@ class AniposeInterface(BaseTemporalAlignmentInterface):
                 unit="a.u.",  # TODO
                 reference_frame="(0, 0, 0) is what?",  # TODO
                 timestamps=timestamps,
+                timestamps_unit="s",
                 starting_time=starting_time,
                 rate=rate,
                 confidence=np.full(self.n_frames, np.nan),
