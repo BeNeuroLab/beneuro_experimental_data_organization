@@ -290,78 +290,64 @@ def download_session(
 
 
 @app.command()
-def download(
-    remote_session_path: Annotated[
-        Path, typer.Argument(help="Path to session directory. Can be relative or absolute.")
+def dl(
+    session_name: Annotated[
+        str, typer.Argument(help="Name of session: M123_2000_02_03_14_15")
     ],
-    subject_name: Annotated[
-        str,
-        typer.Argument(
-            help="Name of the subject the session belongs to. (Used for confirmation.)"
-        ),
-    ],
-    include_behavior: Annotated[
+    b: Annotated[
         bool,
         typer.Option(
             "--include-behavior/--ignore-behavior",
-            help="Download behavioral data or not.",
-            prompt=True,
+            "-b/-B",
+            help="Download behavioral data (-b) or not (-B)."
         ),
-    ],
-    include_ephys: Annotated[
+    ] = True,
+    e: Annotated[
         bool,
         typer.Option(
             "--include-ephys/--ignore-ephys",
-            help="Download ephys data or not.",
-            prompt=True,
+            "-e/-E",
+            help="Download ephys data (-e) or not (-E)."
         ),
-    ],
-    include_videos: Annotated[
+    ] = False,
+    v: Annotated[
         bool,
         typer.Option(
             "--include-videos/--ignore-videos",
-            help="Download video data or not.",
-            prompt=True,
+            "-v/-V",
+            help="Download video data (-v) or not (-V)."
         ),
-    ],
-    # extra files are always included
-    # TODO do we want this to stay this way?
-    # include_extra_files: Annotated[
-    #    bool,
-    #    typer.Option(
-    #        "--include-extra-files/--ignore-extra-files",
-    #        help="Download extra files that are created by the experimenter or other software.",
-    #    ),
-    # ] = True,
+    ] = False,
     processing_level: Annotated[
         str, typer.Argument(help="Processing level of the session. raw or processed.")
     ] = "raw",
 ):
     """
-    Download (raw) experimental data in a given session from the remote server.
+    Download (raw) experimental data from a given session from the remote server.
 
-    Example usage after navigating to session folder on RDS:
-        `bnd download-session . M017`
+    Example usage to download everything:
+        `bnd dl M017_2024_03_12_18_45 -ev`
     """
+    animal = session_name[:4]
     if processing_level != "raw":
         raise NotImplementedError("Sorry, only raw data is supported for now.")
 
-    if all([not include_behavior, not include_ephys, not include_videos]):
+    if all([not b, not e, not v]):
         raise ValueError("At least one data type must be included.")
 
     config = _load_config()
 
     download_raw_session(
-        remote_session_path.absolute(),
-        subject_name,
-        config.LOCAL_PATH,
-        config.REMOTE_PATH,
-        include_behavior,
-        include_ephys,
-        include_videos,
-        config.WHITELISTED_FILES_IN_ROOT,
-        config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
-    )
+        remote_session_path = config.REMOTE_PATH / processing_level / animal / session_name,
+        subject_name = animal,
+        local_base_path = config.LOCAL_PATH,
+        remote_base_path = config.REMOTE_PATH,
+        include_behavior = b,
+        include_ephys = e,
+        include_videos = v,
+        whitelisted_files_in_root = config.WHITELISTED_FILES_IN_ROOT,
+        allowed_extensions_not_in_root = config.EXTENSIONS_TO_RENAME_AND_UPLOAD
+        )
 
     return True
 
