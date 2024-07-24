@@ -799,8 +799,10 @@ def up(
     """
     Upload (raw) experimental data to the remote server.
 
-    Example usage to upload everything:
+    Example usage to upload everything of a given session:
         `bnd up M017_2024_03_12_18_45 -ev`
+    Example to upload the videos and ephys of the last session of a subject:
+        `bnd up M017 -evB`
     """
     animal = session_name[:4]
 
@@ -821,20 +823,32 @@ def up(
 
     config = _load_config()
 
-    up_done = upload_raw_session(
-        config.LOCAL_PATH / processing_level / animal / session_name,
-        animal,
-        config.LOCAL_PATH,
-        config.REMOTE_PATH,
-        include_behavior,
-        include_ephys,
-        include_videos,
-        include_extra_files,
-        config.WHITELISTED_FILES_IN_ROOT,
-        config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
-        rename_videos_first,
-        rename_extra_files_first,
-    )
+    if len(session_name) > 4:  # session name is given
+        up_done = upload_raw_session(
+            config.LOCAL_PATH / processing_level / animal / session_name,
+            animal,
+            config.LOCAL_PATH,
+            config.REMOTE_PATH,
+            include_behavior,
+            include_ephys,
+            include_videos,
+            include_extra_files,
+            config.WHITELISTED_FILES_IN_ROOT,
+            config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
+            rename_videos_first,
+            rename_extra_files_first,
+        )
+    else:  # only animal name is given
+        up_done = upload_last(
+            animal,
+            include_behavior,
+            include_ephys,
+            include_videos,
+            include_extra_files,
+            rename_videos_first,
+            rename_extra_files_first,
+            processing_level,
+        )
     if up_done is True:
         print(f"Session {session_name} uploaded successfully.")
 
