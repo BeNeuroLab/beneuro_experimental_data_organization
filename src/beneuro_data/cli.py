@@ -348,6 +348,7 @@ def dl(
         whitelisted_files_in_root = config.WHITELISTED_FILES_IN_ROOT,
         allowed_extensions_not_in_root = config.EXTENSIONS_TO_RENAME_AND_UPLOAD
         )
+    print(f"Session {session_name} downloaded successfully.")
 
     return True
 
@@ -795,7 +796,6 @@ def up(
         str, typer.Argument(help="Processing level of the session. raw or processed.")
     ] = "raw",
 ):
-
     """
     Upload (raw) experimental data to the remote server.
 
@@ -821,7 +821,7 @@ def up(
 
     config = _load_config()
 
-    upload_raw_session(
+    up_done = upload_raw_session(
         config.LOCAL_PATH / processing_level / animal / session_name,
         animal,
         config.LOCAL_PATH,
@@ -835,6 +835,8 @@ def up(
         rename_videos_first,
         rename_extra_files_first,
     )
+    if up_done is True:
+        print(f"Session {session_name} uploaded successfully.")
 
     return True
 
