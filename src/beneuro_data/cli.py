@@ -290,6 +290,83 @@ def download_session(
 
 
 @app.command()
+def download(
+    remote_session_path: Annotated[
+        Path, typer.Argument(help="Path to session directory. Can be relative or absolute.")
+    ],
+    subject_name: Annotated[
+        str,
+        typer.Argument(
+            help="Name of the subject the session belongs to. (Used for confirmation.)"
+        ),
+    ],
+    include_behavior: Annotated[
+        bool,
+        typer.Option(
+            "--include-behavior/--ignore-behavior",
+            help="Download behavioral data or not.",
+            prompt=True,
+        ),
+    ],
+    include_ephys: Annotated[
+        bool,
+        typer.Option(
+            "--include-ephys/--ignore-ephys",
+            help="Download ephys data or not.",
+            prompt=True,
+        ),
+    ],
+    include_videos: Annotated[
+        bool,
+        typer.Option(
+            "--include-videos/--ignore-videos",
+            help="Download video data or not.",
+            prompt=True,
+        ),
+    ],
+    # extra files are always included
+    # TODO do we want this to stay this way?
+    # include_extra_files: Annotated[
+    #    bool,
+    #    typer.Option(
+    #        "--include-extra-files/--ignore-extra-files",
+    #        help="Download extra files that are created by the experimenter or other software.",
+    #    ),
+    # ] = True,
+    processing_level: Annotated[
+        str, typer.Argument(help="Processing level of the session. raw or processed.")
+    ] = "raw",
+):
+    """
+    Download (raw) experimental data in a given session from the remote server.
+
+    Example usage after navigating to session folder on RDS:
+        `bnd download-session . M017`
+    """
+    if processing_level != "raw":
+        raise NotImplementedError("Sorry, only raw data is supported for now.")
+
+    if all([not include_behavior, not include_ephys, not include_videos]):
+        raise ValueError("At least one data type must be included.")
+
+    config = _load_config()
+
+    download_raw_session(
+        remote_session_path.absolute(),
+        subject_name,
+        config.LOCAL_PATH,
+        config.REMOTE_PATH,
+        include_behavior,
+        include_ephys,
+        include_videos,
+        config.WHITELISTED_FILES_IN_ROOT,
+        config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
+    )
+
+    return True
+
+
+@app.command()
 def kilosort_session(
     local_session_path: Annotated[
         Path, typer.Argument(help="Path to session directory. Can be relative or absolute")
