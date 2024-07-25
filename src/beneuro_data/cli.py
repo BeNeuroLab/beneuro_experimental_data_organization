@@ -348,7 +348,7 @@ def dl(
         whitelisted_files_in_root = config.WHITELISTED_FILES_IN_ROOT,
         allowed_extensions_not_in_root = config.EXTENSIONS_TO_RENAME_AND_UPLOAD
         )
-    print(f"Session {session_name} downloaded successfully.")
+    print(f"Session {session_name} downloaded.")
 
     return True
 
@@ -744,8 +744,8 @@ def upload_session(
 
 @app.command()
 def up(
-    session_name: Annotated[
-        str, typer.Argument(help="Name of session: M123_2000_02_03_14_15")
+    session_or_animal_name: Annotated[
+        str, typer.Argument(help="Animal or session name: M123_2000_02_03_14_15")
     ],
     include_behavior: Annotated[
         bool,
@@ -804,7 +804,7 @@ def up(
     Example to upload the videos and ephys of the last session of a subject:
         `bnd up M017 -evB`
     """
-    animal = session_name[:4]
+    animal = session_or_animal_name[:4]
 
     if processing_level != "raw":
         raise NotImplementedError("Sorry, only raw data is supported for now.")
@@ -823,9 +823,9 @@ def up(
 
     config = _load_config()
 
-    if len(session_name) > 4:  # session name is given
+    if len(session_or_animal_name) > 4:  # session name is given
         up_done = upload_raw_session(
-            config.LOCAL_PATH / processing_level / animal / session_name,
+            config.LOCAL_PATH / processing_level / animal / session_or_animal_name,
             animal,
             config.LOCAL_PATH,
             config.REMOTE_PATH,
@@ -849,8 +849,8 @@ def up(
             rename_extra_files_first,
             processing_level,
         )
-    if up_done is True:
-        print(f"Session {session_name} uploaded successfully.")
+    if up_done:
+        print(f"Session {session_or_animal_name} uploaded.")
 
     return True
 
