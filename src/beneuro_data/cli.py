@@ -752,7 +752,7 @@ def up(
         typer.Option(
             "--include-behavior/--ignore-behavior",
             "-b/-B",
-            help="Download behavioral data (-b) or not (-B)."
+            help="upload behavioral data (-b) or not (-B)."
         ),
     ] = True,
     include_ephys: Annotated[
@@ -760,7 +760,7 @@ def up(
         typer.Option(
             "--include-ephys/--ignore-ephys",
             "-e/-E",
-            help="Download ephys data (-e) or not (-E)."
+            help="upload ephys data (-e) or not (-E)."
         ),
     ] = False,
     include_videos: Annotated[
@@ -768,7 +768,7 @@ def up(
         typer.Option(
             "--include-videos/--ignore-videos",
             "-v/-V",
-            help="Download video data (-v) or not (-V)."
+            help="upload video data (-v) or not (-V)."
         ),
     ] = False,
     include_extra_files: Annotated[
