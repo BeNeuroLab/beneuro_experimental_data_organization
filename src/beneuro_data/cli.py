@@ -745,14 +745,14 @@ def upload_session(
 @app.command()
 def up(
     session_or_animal_name: Annotated[
-        str, typer.Argument(help="Animal or session name: M123_2000_02_03_14_15")
+        str, typer.Argument(help="Animal or session name: M123 or M123_2000_02_03_14_15")
     ],
     include_behavior: Annotated[
         bool,
         typer.Option(
             "--include-behavior/--ignore-behavior",
             "-b/-B",
-            help="upload behavioral data (-b) or not (-B)."
+            help="Upload behavioral data (-b) or not (-B)."
         ),
     ] = True,
     include_ephys: Annotated[
@@ -760,7 +760,7 @@ def up(
         typer.Option(
             "--include-ephys/--ignore-ephys",
             "-e/-E",
-            help="upload ephys data (-e) or not (-E)."
+            help="Upload ephys data (-e) or not (-E)."
         ),
     ] = False,
     include_videos: Annotated[
@@ -768,7 +768,7 @@ def up(
         typer.Option(
             "--include-videos/--ignore-videos",
             "-v/-V",
-            help="upload video data (-v) or not (-V)."
+            help="Upload video data (-v) or not (-V)."
         ),
     ] = False,
     include_extra_files: Annotated[
@@ -838,6 +838,7 @@ def up(
             rename_videos_first,
             rename_extra_files_first,
         )
+        message = f"Session {session_or_animal_name} uploaded."
     else:  # only animal name is given
         up_done = upload_last(
             animal,
@@ -849,8 +850,9 @@ def up(
             rename_extra_files_first,
             processing_level,
         )
+        message = f"Last session of {animal} uploaded."
     if up_done:
-        print(f"Session {session_or_animal_name} uploaded.")
+        print(message)
 
     return True
 
