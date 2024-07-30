@@ -816,6 +816,11 @@ def up(
     if rename_videos_first is None:
         rename_videos_first = include_videos
 
+    if rename_videos_first and not include_videos:
+        raise ValueError(
+            "Do not rename videos if you're not uploading them. (Meaning --ignore-videos and --rename-videos are not allowed together.)"
+        )
+
     config = _load_config()
 
     if len(session_or_animal_name) > 4:  # session name is given
