@@ -1,4 +1,5 @@
 import datetime
+import json
 from pathlib import Path
 from typing import List, Optional
 
@@ -355,31 +356,38 @@ def dl(
 
 @app.command()
 def kilosort_session(
-    local_session_path: Annotated[
-        Path, typer.Argument(help="Path to session directory. Can be relative or absolute")
-    ],
-    subject_name: Annotated[
-        str,
-        typer.Argument(
-            help="Name of the subject the session belongs to. (Used for confirmation.)"
-        ),
+    session_name: Annotated[
+        str, typer.Argument(help="Name of session: M123_2000_02_03_14_15")
     ],
     probes: Annotated[
         Optional[List[str]],
         typer.Argument(
-            help="List of probes to process. If nothing is given, all probes are processed."
+            help="List of probes to process. If nothing is given, all probes "
+                 "are processed."
         ),
     ] = None,
-    clean_up_temp_files: Annotated[
+    custom_params: Annotated[
         bool,
         typer.Option(
-            "--clean-up-temp-files/--keep-temp-files",
-            help="Keep the binary files created or not. They are huge, but needed for running Phy later.",
+            "--custom-params/--default-params",
+            help="Add custom parameters to kilosort algorithm. File must be "
+                 "named sorter_params.json and found in the raw session "
+                 "folder. Field names can be found in "
+                 "https://github.com/MouseLand/Kilosort/blob/main/docs"
+                 "/parameters.rst"
+        )
+    ] = False,
+    save_preprocessed_copy: Annotated[
+        bool,
+        typer.Option(
+            "--save-preprocessed-copy/--dont-save-preprocessed-copy",
+            help="Keep the binary files created or not. They are huge, "
+                 "but needed for running Phy later.",
         ),
-    ] = True,
+    ] = False,
     verbose: Annotated[
         bool, typer.Option(help="Print info about what is being run.")
-    ] = True,
+    ] = True, # Currently not in use
 ):
     """
     Run Kilosort 4 on a session and save the results in the processed folder.
@@ -388,33 +396,32 @@ def kilosort_session(
 
     \b
     Basic usage:
-        `bnd kilosort-session . M020`
+        `bnd kilosort-session M017_2024_03_12_18_45`
 
     \b
     Only sorting specific probes:
-        `bnd kilosort-session . M020 imec0`
-        `bnd kilosort-session . M020 imec0 imec1`
+        `bnd kilosort-session M017_2024_03_12_18_45 imec0`
+        `bnd kilosort-session M017_2024_03_12_18_45 imec0 imec1`
 
     \b
-    Keeping binary files useful for Phy:
-        `bnd kilosort-session . M020 --keep-temp-files`
-
-    \b
-    Suppressing output:
-        `bnd kilosort-session . M020 --no-verbose`
+    Using custom parameters:
+        `bnd kilosort-session M017_2024_03_12_18_45 --custom-params`
     """
+
     # this will throw an error if the dependencies are not available
     from beneuro_data.spike_sorting import \
         run_kilosort_on_session_and_save_in_processed
 
     config = _load_config()
 
-    if not local_session_path.absolute().is_dir():
-        raise ValueError("Session path must be a directory.")
-    if not local_session_path.absolute().exists():
+    # Parse settings
+    subject_name = session_name[:4]
+    processing_level = "raw"
+    absolute_session_path = config.LOCAL_PATH / processing_level / subject_name / session_name
+    print(f'Session found in {absolute_session_path}')
+
+    if not absolute_session_path.exists():
         raise ValueError("Session path does not exist.")
-    if not local_session_path.absolute().is_relative_to(config.LOCAL_PATH):
-        raise ValueError("Session path must be inside the local root folder.")
 
     if len(probes) != 0:
         if len(set(probes)) != len(probes):
@@ -423,20 +430,34 @@ def kilosort_session(
         stream_names_to_process = [f"{probe}.ap" for probe in probes]
         # check that they are all in the session folder somewhere
         for stream_name in stream_names_to_process:
-            if len(list(local_session_path.glob(f"**/*{stream_name}.bin"))) == 0:
+            if len(list(absolute_session_path.glob(f"**/*{stream_name}.bin"))) == 0:
                 raise ValueError(
-                    f"No file found for {stream_name} in {local_session_path.absolute()}"
+                    f"No file found for {stream_name} in {absolute_session_path.absolute()}"
                 )
     else:
         stream_names_to_process = None
 
+    if custom_params:
+        sorter_params_file = list(absolute_session_path.glob("*.json"))
+        if len(sorter_params_file) > 1:
+            raise ValueError(f"Too many .json files found. Please create a "
+                             f"single sorter_params.json file for the session")
+        elif len(sorter_params_file) == 0:
+            raise ValueError(f"No sorter_params.json file found. Please "
+                             f"create one or remove the `--custom-params` flag")
+        with sorter_params_file[0].open('r') as file:
+            sorter_params = json.load(file)
+    else:
+        sorter_params = None
+
     run_kilosort_on_session_and_save_in_processed(
-        local_session_path.absolute(),
+        absolute_session_path,
         subject_name,
         config.LOCAL_PATH,
         config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
         stream_names_to_process=stream_names_to_process,
-        clean_up_temp_files=clean_up_temp_files,
+        save_preprocessed_copy=save_preprocessed_copy,
+        sorter_params=sorter_params,
         verbose=verbose,
     )
 
