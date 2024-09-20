@@ -141,9 +141,9 @@ def _parse_pynwb_probe(probe_units: Units, electrode_info: pd.DataFrame, bin_siz
         sorted_chan_best = unsorted_chan_best[sorted_chan_best_indices]
 
         # Take neurons that are brain area specific and them sort them according to unit guide
-        brain_area_spikes_and_chan_best[brain_area] = {'spikes': binned_spikes[brain_area_neurons, :][sorted_chan_best_indices, :]}
-        brain_area_spikes_and_chan_best[brain_area]['chan_best'] = sorted_chan_best
-        brain_area_spikes_and_chan_best[brain_area]['KSLabel'] = probe_units.KSLabel[brain_area_neurons][sorted_chan_best_indices]
+        brain_area_spikes_and_chan_best[brain_area.replace('-', '_')] = {'spikes': binned_spikes[brain_area_neurons, :][sorted_chan_best_indices, :]}
+        brain_area_spikes_and_chan_best[brain_area.replace('-', '_')]['chan_best'] = sorted_chan_best
+        brain_area_spikes_and_chan_best[brain_area.replace('-', '_')]['KSLabel'] = probe_units.KSLabel[brain_area_neurons][sorted_chan_best_indices]
 
     return brain_area_spikes_and_chan_best
 
@@ -618,7 +618,7 @@ class ParsedNWBFile:
         self.add_mouse_and_datetime()
         return
 
-    def save_to_csv(self):
+    def save_to_mat(self):
         path_to_save = self.nwbfile_path.parent / f'{self.nwbfile_path.parent.name}_pyaldata.mat'
         if path_to_save.exists():
             # Prompt the user with an interactive menu
@@ -626,7 +626,6 @@ class ParsedNWBFile:
                 user_input = input(
                     f"File '{path_to_save}' already exists. Do you want to overwrite it? (y/n): ").lower().strip()
                 if user_input == 'y':
-                    breakpoint()
                     print(f'Saving file...')
                     data_array = self.pyaldata_df.to_records(index=False)
                     scipy.io.savemat(path_to_save, {'pyaldata': data_array})
@@ -654,6 +653,6 @@ def convert_nwb_to_pyaldata(nwbfile_path, verbose):
     parsed_nwbfile.run_conversion()
 
     # Save in processed
-    parsed_nwbfile.save_to_csv()
+    parsed_nwbfile.save_to_mat()
 
     return
