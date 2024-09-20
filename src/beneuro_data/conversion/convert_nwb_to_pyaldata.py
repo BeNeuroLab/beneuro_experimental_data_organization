@@ -1,6 +1,7 @@
 """
 Module for conversion from nwb to pyaldata format
 """
+
 import warnings
 
 import numpy as np
@@ -53,8 +54,8 @@ def _bin_spikes(probe_units: Units, bin_size: float) -> np.array:
 def _add_unit_counter_to_unit_guide(unit_guide):
 
     warnings.warn(
-        '_add_unit_counter_to_unit_guide() is deprecated. Unit guides are now called chan_best'
-        ' and do not have a second column'
+        "_add_unit_counter_to_unit_guide() is deprecated. Unit guides are now called chan_best"
+        " and do not have a second column"
     )
 
     return
@@ -79,7 +80,9 @@ def _add_unit_counter_to_unit_guide(unit_guide):
     return new_unit_guide
 
 
-def _parse_pynwb_probe(probe_units: Units, electrode_info: pd.DataFrame, bin_size: float) -> dict:
+def _parse_pynwb_probe(
+    probe_units: Units, electrode_info: pd.DataFrame, bin_size: float
+) -> dict:
     """
     Parse nwb Units object to bin spikes, reorder units and extract kilosort labels
 
@@ -115,35 +118,49 @@ def _parse_pynwb_probe(probe_units: Units, electrode_info: pd.DataFrame, bin_siz
 
     # Get brain area channel map for this specific probe
     electrode_info_df = electrode_info.to_dataframe()
-    probe_electrode_locations_df = electrode_info_df[electrode_info_df['group_name'] == probe_units.name.split('_')[-1]]
-    probe_channel_map = probe_electrode_locations_df['location'].to_dict()
+    probe_electrode_locations_df = electrode_info_df[
+        electrode_info_df["group_name"] == probe_units.name.split("_")[-1]
+    ]
+    probe_channel_map = probe_electrode_locations_df["location"].to_dict()
 
-    no_pinpoint_channel_map = all(value == 'nan' for value in probe_channel_map.values())
+    no_pinpoint_channel_map = all(value == "nan" for value in probe_channel_map.values())
 
     brain_area_spikes_and_chan_best = {}
     if no_pinpoint_channel_map:
-        brain_areas = {'all'}
+        brain_areas = {"all"}
     else:
-        brain_areas = {value for value in probe_channel_map.values() if value not in ['out', 'void']}
+        brain_areas = {
+            value for value in probe_channel_map.values() if value not in ["out", "void"]
+        }
 
     for brain_area in brain_areas:
 
         if no_pinpoint_channel_map:  # Take all channels if there is no channel map
             brain_area_channels = [key for key, value in probe_channel_map.items()]
         else:
-            brain_area_channels = [key for key, value in probe_channel_map.items() if value == brain_area]
+            brain_area_channels = [
+                key for key, value in probe_channel_map.items() if value == brain_area
+            ]
 
         brain_area_neurons = np.where(np.isin(chan_best, brain_area_channels))[0]
 
         # Define unit guide
         unsorted_chan_best = chan_best[brain_area_neurons]
-        sorted_chan_best_indices = np.argsort(unsorted_chan_best)  # Variable with sorted indices
+        sorted_chan_best_indices = np.argsort(
+            unsorted_chan_best
+        )  # Variable with sorted indices
         sorted_chan_best = unsorted_chan_best[sorted_chan_best_indices]
 
         # Take neurons that are brain area specific and them sort them according to unit guide
-        brain_area_spikes_and_chan_best[brain_area.replace('-', '_')] = {'spikes': binned_spikes[brain_area_neurons, :][sorted_chan_best_indices, :]}
-        brain_area_spikes_and_chan_best[brain_area.replace('-', '_')]['chan_best'] = sorted_chan_best
-        brain_area_spikes_and_chan_best[brain_area.replace('-', '_')]['KSLabel'] = probe_units.KSLabel[brain_area_neurons][sorted_chan_best_indices]
+        brain_area_spikes_and_chan_best[brain_area.replace("-", "_")] = {
+            "spikes": binned_spikes[brain_area_neurons, :][sorted_chan_best_indices, :]
+        }
+        brain_area_spikes_and_chan_best[brain_area.replace("-", "_")][
+            "chan_best"
+        ] = sorted_chan_best
+        brain_area_spikes_and_chan_best[brain_area.replace("-", "_")]["KSLabel"] = (
+            probe_units.KSLabel[brain_area_neurons][sorted_chan_best_indices]
+        )
 
     return brain_area_spikes_and_chan_best
 
@@ -165,13 +182,15 @@ def _parse_pose_estimation_series(pose_est_series: PoseEstimationSeries) -> pd.D
     """
 
     if pose_est_series.data[:].shape[1] == 3:
-        colnames = ['x', 'y', 'z']
+        colnames = ["x", "y", "z"]
     elif pose_est_series.data[:].shape[1] == 2 and all(pose_est_series.data[:, 1] == 0):
         # If this is true we assume we are dealing with angle data
-        colnames = ['angle']
+        colnames = ["angle"]
     else:
-        raise ValueError(f"Shape {pose_est_series.data[:].shape} is not supported by pynwb."
-                         f" Please provide a valid PoseEstimationSeries object")
+        raise ValueError(
+            f"Shape {pose_est_series.data[:].shape} is not supported by pynwb."
+            f" Please provide a valid PoseEstimationSeries object"
+        )
 
     df = pd.DataFrame()
     for i, col in enumerate(colnames):
@@ -179,7 +198,7 @@ def _parse_pose_estimation_series(pose_est_series: PoseEstimationSeries) -> pd.D
 
     timestamps = np.arange(pose_est_series.data[:].shape[0])
     timestamps = timestamps / pose_est_series.rate + pose_est_series.starting_time
-    df['timestamps'] = timestamps
+    df["timestamps"] = timestamps
 
     return df
 
@@ -200,25 +219,31 @@ def _parse_spatial_series(spatial_series: SpatialSeries) -> pd.DataFrame:
     """
 
     if spatial_series.data[:].shape[1] == 2:
-        colnames = ['x', 'y']
+        colnames = ["x", "y"]
     elif spatial_series.data[:].shape[1] == 3:
-        colnames = ['x', 'y', 'z']
+        colnames = ["x", "y", "z"]
     else:
-        raise ValueError(f"Shape {spatial_series.data[:].shape} is not supported by pynwb. "
-                         f"Please provide a valid SpatialSeries object")
+        raise ValueError(
+            f"Shape {spatial_series.data[:].shape} is not supported by pynwb. "
+            f"Please provide a valid SpatialSeries object"
+        )
 
     df = pd.DataFrame()
     for i, col in enumerate(colnames):
         df[col] = spatial_series.data[:, i]
 
-    df['timestamps'] = spatial_series.timestamps[:]
+    df["timestamps"] = spatial_series.timestamps[:]
 
     return df
 
 
-def _add_data_to_trial(df_to_add_to: pd.DataFrame,
-                       new_data_column: str, df_to_add_from: pd.DataFrame,
-                       columns_to_read_from: str | list, timestamp_column=None) -> pd.DataFrame:
+def _add_data_to_trial(
+    df_to_add_to: pd.DataFrame,
+    new_data_column: str,
+    df_to_add_from: pd.DataFrame,
+    columns_to_read_from: str | list,
+    timestamp_column=None,
+) -> pd.DataFrame:
     """
     Data-type agnostic function to read data from ParsedNWBfile and add it to pyaldata dataframe
 
@@ -241,17 +266,25 @@ def _add_data_to_trial(df_to_add_to: pd.DataFrame,
     """
     for index, row in df_to_add_to.iterrows():
         trial_specific_events = df_to_add_from[
-            (df_to_add_from['timestamp_idx'] >= row['idx_trial_start']) &
-            (df_to_add_from['timestamp_idx'] <= row['idx_trial_end'])
+            (df_to_add_from["timestamp_idx"] >= row["idx_trial_start"])
+            & (df_to_add_from["timestamp_idx"] <= row["idx_trial_end"])
         ]
 
         # Add to pyaldata dataframe
-        df_to_add_to[new_data_column] = df_to_add_to[new_data_column].astype('object')
-        df_to_add_to.at[index, new_data_column] = trial_specific_events[columns_to_read_from].to_numpy()
+        df_to_add_to[new_data_column] = df_to_add_to[new_data_column].astype("object")
+        df_to_add_to.at[index, new_data_column] = trial_specific_events[
+            columns_to_read_from
+        ].to_numpy()
 
         if timestamp_column is not None:
-            df_to_add_to[f'{timestamp_column}'] = df_to_add_to[f'{timestamp_column}'].astype('object')
-            df_to_add_to.at[index, f'{timestamp_column}'] = trial_specific_events['timestamp_idx'].to_numpy() - row['idx_trial_start']
+            df_to_add_to[timestamp_column] = df_to_add_to[timestamp_column].astype("object")
+            df_to_add_to.at[index, timestamp_column] = (
+                trial_specific_events["timestamp_idx"].to_numpy() - row["idx_trial_start"]
+            )
+
+    # df_to_add_to[new_data_column] = df_to_add_to[new_data_column].apply(lambda x: np.expand_dims(x, axis=0) if hasattr(x, 'ndim') and x.ndim == 0 else x)
+    # if timestamp_column is not None:
+    #     df_to_add_to[timestamp_column] = df_to_add_to[timestamp_column].apply(lambda x: np.expand_dims(x, axis=0) if hasattr(x, 'ndim') and x.ndim == 0 else x)
 
     return df_to_add_to
 
@@ -274,8 +307,8 @@ class ParsedNWBFile:
             self.try_to_include_subject_info()
 
             # Processing modules
-            self.try_to_parse_processing_module('behavior')
-            self.try_to_parse_processing_module('ecephys')
+            self.try_to_parse_processing_module("behavior")
+            self.try_to_parse_processing_module("ecephys")
 
             # Initialize Pyaldata dataframe
             self.pyaldata_df = None
@@ -292,8 +325,10 @@ class ParsedNWBFile:
                 self.subject_id = self.nwbfile.subject.subject_id
                 return
 
-        warnings.warn(f'NWBFile {self.nwbfile_path.name} does not have subject information')
-        self.subject_id = np.nan
+        warnings.warn(
+            f"NWBFile {self.nwbfile_path.name} does not have subject information. Using animal name from session path"
+        )
+        self.subject_id = self.nwbfile_path.name[:4]
         return
 
     def try_to_parse_processing_module(self, processing_key: str) -> None:
@@ -311,8 +346,12 @@ class ParsedNWBFile:
         """
         if hasattr(self.nwbfile, "processing"):
             if processing_key in self.nwbfile.processing.keys():
-                setattr(self, processing_key, self.nwbfile.processing[processing_key].data_interfaces)
-                if processing_key == 'behavior':
+                setattr(
+                    self,
+                    processing_key,
+                    self.nwbfile.processing[processing_key].data_interfaces,
+                )
+                if processing_key == "behavior":
 
                     # Pycontrol states and events. This is assumed to always be there if
                     # there is a behavior processin module
@@ -325,14 +364,18 @@ class ParsedNWBFile:
                     # Anipose data
                     self.try_parsing_anipose_output()
 
-                elif processing_key == 'ecephys':
+                elif processing_key == "ecephys":
                     # If there is a ephys processing module we assume there is spiking data
                     self.parse_spike_data()
 
             else:
-                warnings.warn(f'NWBFile {self.nwbfile.processing.keys()} does not have {processing_key}')
+                warnings.warn(
+                    f"NWBFile {self.nwbfile.processing.keys()} does not have {processing_key}"
+                )
         else:
-            warnings.warn(f'NWBFile {self.nwbfile_path.name} does not have processing module')
+            warnings.warn(
+                f"NWBFile {self.nwbfile_path.name} does not have processing module"
+            )
 
         return
 
@@ -349,8 +392,10 @@ class ParsedNWBFile:
         if self.verbose:
             print("Parsing pycontrol states")
 
-        data_dict = {col: self.behavior["behavioral_states"][col].data[:] for col in
-                     self.behavior["behavioral_states"].colnames}
+        data_dict = {
+            col: self.behavior["behavioral_states"][col].data[:]
+            for col in self.behavior["behavioral_states"].colnames
+        }
         self.pycontrol_states = pd.DataFrame(data_dict)
         return
 
@@ -367,19 +412,21 @@ class ParsedNWBFile:
         if self.verbose:
             print("Parsing pycontrol events")
 
-        behav_events_time_series = self.behavior['behavioral_events'].time_series[
-            'behavioral events']
-        print_events_time_series = self.behavior['print_events'].time_series
+        behav_events_time_series = self.behavior["behavioral_events"].time_series[
+            "behavioral events"
+        ]
+        print_events_time_series = self.behavior["print_events"].time_series
 
         # First make dataframe with behav events
         df_behav_events = pd.DataFrame()
 
         # Behavioural event dont have values but print events do so we need to
         # stay consistent with dimension
-        df_behav_events['event'] = behav_events_time_series.data[:]
-        df_behav_events['value'] = np.full(behav_events_time_series.data[:].shape[0],
-                                           np.nan)
-        df_behav_events['timestamp'] = behav_events_time_series.timestamps[:]
+        df_behav_events["event"] = behav_events_time_series.data[:]
+        df_behav_events["value"] = np.full(
+            behav_events_time_series.data[:].shape[0], np.nan
+        )
+        df_behav_events["timestamp"] = behav_events_time_series.timestamps[:]
 
         # Then make dataframe with print events, and a df for each print event
         # Sounds a bit convoluted but it is converted to .nwb with a different
@@ -388,17 +435,19 @@ class ParsedNWBFile:
         for print_event in print_events_time_series.keys():
             tmp_df = pd.DataFrame()
 
-            tmp_df['event'] = np.full(
-                print_events_time_series[print_event].data[:].shape[0], print_event)
-            tmp_df['value'] = print_events_time_series[print_event].data[:]
-            tmp_df['timestamp'] = print_events_time_series[print_event].timestamps[:]
+            tmp_df["event"] = np.full(
+                print_events_time_series[print_event].data[:].shape[0], print_event
+            )
+            tmp_df["value"] = print_events_time_series[print_event].data[:]
+            tmp_df["timestamp"] = print_events_time_series[print_event].timestamps[:]
 
-            df_print_events = pd.concat([df_print_events, tmp_df], axis=0,
-                                        ignore_index=True)
+            df_print_events = pd.concat(
+                [df_print_events, tmp_df], axis=0, ignore_index=True
+            )
 
         # Concatenate both dataframes
         df_events = pd.concat([df_behav_events, df_print_events], axis=0, ignore_index=True)
-        df_events.sort_values(by='timestamp', ascending=True, inplace=True)
+        df_events.sort_values(by="timestamp", ascending=True, inplace=True)
         df_events.reset_index(drop=True, inplace=True)
         self.pycontrol_events = df_events
 
@@ -412,15 +461,16 @@ class ParsedNWBFile:
         -------
 
         """
-        if 'Position' not in self.behavior.keys():
-            warnings.warn(f'No motion data available')
-            self.pycontrol_motion_sensors = None
+        if "Position" not in self.behavior.keys():
+            warnings.warn(f"No motion data available")
+            self.pycontrol_motion_sensors = np.nan
             return
 
         if self.verbose:
             print("Parsing motion sensors")
-        ball_position_spatial_series = self.behavior['Position'].spatial_series[
-            'Ball position']
+        ball_position_spatial_series = self.behavior["Position"].spatial_series[
+            "Ball position"
+        ]
         self.pycontrol_motion_sensors = _parse_spatial_series(ball_position_spatial_series)
         return
 
@@ -432,18 +482,19 @@ class ParsedNWBFile:
         -------
 
         """
-        if 'Pose estimation' not in self.behavior.keys():
-            warnings.warn(f'No anipose data available')
+        if "Pose estimation" not in self.behavior.keys():
+            warnings.warn(f"No anipose data available")
             return
 
         if self.verbose:
             print("Parsing anipose data")
-        anipose_data_dict = self.behavior['Pose estimation'].pose_estimation_series
+        anipose_data_dict = self.behavior["Pose estimation"].pose_estimation_series
 
         parsed_anipose_data_dict = {}
         for key in anipose_data_dict.keys():
             parsed_anipose_data_dict[key] = _parse_pose_estimation_series(
-                anipose_data_dict[key])
+                anipose_data_dict[key]
+            )
         self.anipose_data = parsed_anipose_data_dict
 
         return
@@ -465,7 +516,7 @@ class ParsedNWBFile:
             spike_data_dict[probe_units] = _parse_pynwb_probe(
                 probe_units=self.ecephys[probe_units],
                 electrode_info=self.nwbfile.electrodes,
-                bin_size=self.bin_size
+                bin_size=self.bin_size,
             )
         self.spike_data = spike_data_dict
         return
@@ -475,45 +526,54 @@ class ParsedNWBFile:
         start_time = 0.0
         end_time = self.pycontrol_states.stop_time.values[-1] / 1000  # To seconds
         number_of_bins = int(np.floor((end_time - start_time) / self.bin_size))
-        self.pyaldata_df['trial_id'] = self.pycontrol_states.start_time.index
-        self.pyaldata_df['bin_size'] = self.bin_size
+        self.pyaldata_df["trial_id"] = self.pycontrol_states.start_time.index
+        self.pyaldata_df["bin_size"] = self.bin_size
 
         # Start and stop times of each state
-        self.pyaldata_df['idx_trial_start'] = np.ceil(
-            self.pycontrol_states.start_time.values[:] / 1000 / self.bin_size).astype(int)
-        self.pyaldata_df['idx_trial_end'] = np.floor(
-            self.pycontrol_states.stop_time.values[:] / 1000 / self.bin_size).astype(int)
+        self.pyaldata_df["idx_trial_start"] = np.ceil(
+            self.pycontrol_states.start_time.values[:] / 1000 / self.bin_size
+        ).astype(int)
+        self.pyaldata_df["idx_trial_end"] = np.floor(
+            self.pycontrol_states.stop_time.values[:] / 1000 / self.bin_size
+        ).astype(int)
 
-        self.pyaldata_df['trial_name'] = self.pycontrol_states.state_name[:]
+        self.pyaldata_df["trial_name"] = self.pycontrol_states.state_name[:]
 
         if self.pyaldata_df.idx_trial_end.values[-1] != number_of_bins:
             warnings.warn(
-                f'Extract number of bins: {self.pyaldata_df.idx_trial_end.values[-1]} does not match calculated '
-                f'number of bins: {number_of_bins} ')
+                f"Extract number of bins: {self.pyaldata_df.idx_trial_end.values[-1]} does not match calculated "
+                f"number of bins: {number_of_bins} "
+            )
 
-        self.pyaldata_df['trial_length'] = self.pyaldata_df['idx_trial_end'] - self.pyaldata_df['idx_trial_start'] + 1
+        self.pyaldata_df["trial_length"] = (
+            self.pyaldata_df["idx_trial_end"] - self.pyaldata_df["idx_trial_start"] + 1
+        )
 
         return
 
     def add_pycontrol_events_to_df(self):
 
-        unique_events = self.pycontrol_events['event'].unique()
+        unique_events = self.pycontrol_events["event"].unique()
         for unique_event in unique_events:
-            self.pyaldata_df[f'{unique_event}_values'] = np.nan
-            self.pyaldata_df[f'{unique_event}_idx'] = np.nan
+            self.pyaldata_df[f"{unique_event}_values"] = np.nan
+            self.pyaldata_df[f"{unique_event}_idx"] = np.nan
 
         # Add timestamp_idx
-        self.pycontrol_events['timestamp_idx'] = np.floor(self.pycontrol_events.timestamp.values[:] / 1000 / self.bin_size).astype(int)
+        self.pycontrol_events["timestamp_idx"] = np.floor(
+            self.pycontrol_events.timestamp.values[:] / 1000 / self.bin_size
+        ).astype(int)
 
         # Iterate over states
         for unique_event in unique_events:
-            unique_event_df = self.pycontrol_events[self.pycontrol_events['event'] == unique_event]
+            unique_event_df = self.pycontrol_events[
+                self.pycontrol_events["event"] == unique_event
+            ]
             self.pyaldata_df = _add_data_to_trial(
                 df_to_add_to=self.pyaldata_df,
-                new_data_column=f'{unique_event}_values',
+                new_data_column=f"{unique_event}_values",
                 df_to_add_from=unique_event_df,
-                columns_to_read_from='value',
-                timestamp_column=f'{unique_event}_idx'
+                columns_to_read_from="value",
+                timestamp_column=f"{unique_event}_idx",
             )
 
         return
@@ -521,18 +581,20 @@ class ParsedNWBFile:
     def add_motion_sensor_data_to_df(self):
         if hasattr(self, "pycontrol_motion_sensors"):
             # Bin timestamps
-            self.pycontrol_motion_sensors['timestamp_idx'] = np.floor(self.pycontrol_motion_sensors.timestamps.values[:] / 1000 / self.bin_size).astype(int)
+            self.pycontrol_motion_sensors["timestamp_idx"] = np.floor(
+                self.pycontrol_motion_sensors.timestamps.values[:] / 1000 / self.bin_size
+            ).astype(int)
 
             # Add columns
-            self.pyaldata_df['motion_sensor_xy'] = np.nan
+            self.pyaldata_df["motion_sensor_xy"] = np.nan
 
             # Add data
             self.pyaldata_df = _add_data_to_trial(
                 df_to_add_to=self.pyaldata_df,
-                new_data_column='motion_sensor_xy',
+                new_data_column="motion_sensor_xy",
                 df_to_add_from=self.pycontrol_motion_sensors,
-                columns_to_read_from=['x', 'y'],
-                timestamp_column=None
+                columns_to_read_from=["x", "y"],
+                timestamp_column=None,
             )
         return
 
@@ -541,7 +603,9 @@ class ParsedNWBFile:
             for anipose_key, anipose_value in self.anipose_data.items():
                 # Bin timestamps
                 # TODO: Predefine time units during nwb conversion
-                anipose_value['timestamp_idx'] = np.floor(anipose_value.timestamps.values[:] / self.bin_size).astype(int)
+                anipose_value["timestamp_idx"] = np.floor(
+                    anipose_value.timestamps.values[:] / self.bin_size
+                ).astype(int)
 
                 # Add columns
                 self.pyaldata_df[anipose_key] = np.nan
@@ -551,8 +615,10 @@ class ParsedNWBFile:
                     df_to_add_to=self.pyaldata_df,
                     new_data_column=anipose_key,
                     df_to_add_from=anipose_value,
-                    columns_to_read_from='angle' if 'angle' in anipose_key else ['x', 'y', 'z'],
-                    timestamp_column=None
+                    columns_to_read_from=(
+                        "angle" if "angle" in anipose_key else ["x", "y", "z"]
+                    ),
+                    timestamp_column=None,
                 )
 
         return
@@ -560,31 +626,46 @@ class ParsedNWBFile:
     def add_spiking_data_to_df(self):
         if hasattr(self, "spike_data"):
             for probe_key in self.spike_data.keys():
-                for brain_area_key, brain_area_spike_data in self.spike_data[probe_key].items():
+                for brain_area_key, brain_area_spike_data in self.spike_data[
+                    probe_key
+                ].items():
 
                     # Add unit guide
-                    self.pyaldata_df[f'{brain_area_key}_chan_best'] = [brain_area_spike_data['chan_best']] * len(self.pyaldata_df)
+                    self.pyaldata_df[f"{brain_area_key}_chan_best"] = [
+                        brain_area_spike_data["chan_best"]
+                    ] * len(self.pyaldata_df)
 
                     # Add unit guide
-                    self.pyaldata_df[f'{brain_area_key}_KSLabel'] = [brain_area_spike_data['KSLabel']] * len(self.pyaldata_df)
+                    self.pyaldata_df[f"{brain_area_key}_KSLabel"] = [
+                        brain_area_spike_data["KSLabel"]
+                    ] * len(self.pyaldata_df)
 
-                    self.pyaldata_df[f'{brain_area_key}_spikes'] = np.nan
-                    tmp_df = pd.DataFrame(brain_area_spike_data['spikes'].T)  # Transpose
-                    tmp_df['timestamp_idx'] = tmp_df.index  # Add timestamp for the following function
+                    self.pyaldata_df[f"{brain_area_key}_spikes"] = np.nan
+                    tmp_df = pd.DataFrame(brain_area_spike_data["spikes"].T)  # Transpose
+                    tmp_df["timestamp_idx"] = (
+                        tmp_df.index
+                    )  # Add timestamp for the following function
 
                     # Add data
                     self.pyaldata_df = _add_data_to_trial(
                         df_to_add_to=self.pyaldata_df,
-                        new_data_column=f'{brain_area_key}_spikes',
+                        new_data_column=f"{brain_area_key}_spikes",
                         df_to_add_from=tmp_df,
-                        columns_to_read_from=[col for col in tmp_df.columns if col != 'timestamp_idx'],
-                        timestamp_column=None
+                        columns_to_read_from=[
+                            col for col in tmp_df.columns if col != "timestamp_idx"
+                        ],
+                        timestamp_column=None,
                     )
         return
 
     def add_mouse_and_datetime(self):
-        self.pyaldata_df['mouse'] = [self.subject_id] * len(self.pyaldata_df)
-        self.pyaldata_df['date_time'] = [self.session_datetime.strftime('%Y-%m-%d %H:%M:%S %Z%z')] * len(self.pyaldata_df) if self.session_datetime is not None else [None] * len(self.pyaldata_df)
+        self.pyaldata_df["mouse"] = [self.subject_id] * len(self.pyaldata_df)
+        self.pyaldata_df["date_time"] = (
+            [self.session_datetime.strftime("%Y-%m-%d %H:%M:%S %Z%z")]
+            * len(self.pyaldata_df)
+            if self.session_datetime is not None
+            else [None] * len(self.pyaldata_df)
+        )
         return
 
     def run_conversion(self):
@@ -599,8 +680,16 @@ class ParsedNWBFile:
             print("Converting parsed nwb data into pyaldata format")
 
         # Define all the necessary columns
-        columns = ['mouse', 'date_time', 'trial_id', 'trial_name', 'trial_length',
-                         'bin_size', 'idx_trial_start', 'idx_trial_end']
+        columns = [
+            "mouse",
+            "date_time",
+            "trial_id",
+            "trial_name",
+            "trial_length",
+            "bin_size",
+            "idx_trial_start",
+            "idx_trial_end",
+        ]
 
         # Initialize dataframe
         self.pyaldata_df = pd.DataFrame(columns=columns)
@@ -619,28 +708,36 @@ class ParsedNWBFile:
         return
 
     def save_to_mat(self):
-        path_to_save = self.nwbfile_path.parent / f'{self.nwbfile_path.parent.name}_pyaldata.mat'
+        # breakpoint()
+        path_to_save = (
+            self.nwbfile_path.parent / f"{self.nwbfile_path.parent.name}_pyaldata.mat"
+        )
         if path_to_save.exists():
             # Prompt the user with an interactive menu
             while True:
-                user_input = input(
-                    f"File '{path_to_save}' already exists. Do you want to overwrite it? (y/n): ").lower().strip()
-                if user_input == 'y':
-                    print(f'Saving file...')
+                user_input = (
+                    input(
+                        f"File '{path_to_save}' already exists. Do you want to overwrite it? (y/n): "
+                    )
+                    .lower()
+                    .strip()
+                )
+                if user_input == "y":
+                    print(f"Saving file...")
                     data_array = self.pyaldata_df.to_records(index=False)
-                    scipy.io.savemat(path_to_save, {'pyaldata': data_array})
+                    scipy.io.savemat(path_to_save, {"pyaldata": data_array})
                     print(f"File '{path_to_save}' has been overwritten.")
                     break
-                elif user_input == 'n':
+                elif user_input == "n":
                     print(f"File '{path_to_save}' was not overwritten.")
                     break
                 else:
                     print("Please enter 'y' for yes or 'n' for no.")
         else:
-            print(f'Saving file...')
+            print(f"Saving file...")
             data_array = self.pyaldata_df.to_records(index=False)
-            scipy.io.savemat(path_to_save, {'pyaldata': data_array})
-            print(f'Saved pyaldata file in {path_to_save}')
+            scipy.io.savemat(path_to_save, {"pyaldata": data_array})
+            print(f"Saved pyaldata file in {path_to_save}")
         return
 
 
