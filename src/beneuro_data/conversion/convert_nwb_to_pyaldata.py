@@ -282,10 +282,6 @@ def _add_data_to_trial(
                 trial_specific_events["timestamp_idx"].to_numpy() - row["idx_trial_start"]
             )
 
-    # df_to_add_to[new_data_column] = df_to_add_to[new_data_column].apply(lambda x: np.expand_dims(x, axis=0) if hasattr(x, 'ndim') and x.ndim == 0 else x)
-    # if timestamp_column is not None:
-    #     df_to_add_to[timestamp_column] = df_to_add_to[timestamp_column].apply(lambda x: np.expand_dims(x, axis=0) if hasattr(x, 'ndim') and x.ndim == 0 else x)
-
     return df_to_add_to
 
 
@@ -301,7 +297,6 @@ class ParsedNWBFile:
             # Nwb file
             self.nwbfile_path = nwbfile_path
             self.nwbfile = io.read()
-            self.session_datetime = self.nwbfile.session_start_time
 
             # Subject data
             self.try_to_include_subject_info()
@@ -555,8 +550,8 @@ class ParsedNWBFile:
 
         unique_events = self.pycontrol_events["event"].unique()
         for unique_event in unique_events:
-            self.pyaldata_df[f"{unique_event}_values"] = np.nan
-            self.pyaldata_df[f"{unique_event}_idx"] = np.nan
+            self.pyaldata_df[f"values_{unique_event}"] = np.nan
+            self.pyaldata_df[f"idx_{unique_event}"] = np.nan
 
         # Add timestamp_idx
         self.pycontrol_events["timestamp_idx"] = np.floor(
@@ -570,10 +565,10 @@ class ParsedNWBFile:
             ]
             self.pyaldata_df = _add_data_to_trial(
                 df_to_add_to=self.pyaldata_df,
-                new_data_column=f"{unique_event}_values",
+                new_data_column=f"values_{unique_event}",
                 df_to_add_from=unique_event_df,
                 columns_to_read_from="value",
-                timestamp_column=f"{unique_event}_idx",
+                timestamp_column=f"idx_{unique_event}",
             )
 
         return
@@ -659,13 +654,30 @@ class ParsedNWBFile:
         return
 
     def add_mouse_and_datetime(self):
-        self.pyaldata_df["mouse"] = [self.subject_id] * len(self.pyaldata_df)
-        self.pyaldata_df["date_time"] = (
-            [self.session_datetime.strftime("%Y-%m-%d %H:%M:%S %Z%z")]
+        self.pyaldata_df["animal"] = [self.subject_id] * len(self.pyaldata_df)
+        self.pyaldata_df["datetime"] = (
+            [self.nwbfile_path.name[5:-4]]
             * len(self.pyaldata_df)
-            if self.session_datetime is not None
-            else [None] * len(self.pyaldata_df)
         )
+        return
+
+    def purge_nan_columns(self):
+        """
+        Remove columns that are all nans
+        """
+        def _is_empty_array_or_nans(value):
+            if isinstance(value, np.ndarray):
+                if not value.shape or all(item == np.nan for item in value):
+                    return True
+            elif value == np.nan:
+                return True
+            else:
+                return False
+
+        for col_name, col_data in self.pyaldata_df.items():
+            if all(col_data.apply(_is_empty_array_or_nans)):
+                self.pyaldata_df.drop(col_name, axis=1, inplace=True)
+
         return
 
     def run_conversion(self):
@@ -681,8 +693,8 @@ class ParsedNWBFile:
 
         # Define all the necessary columns
         columns = [
-            "mouse",
-            "date_time",
+            "animal",
+            "datetime",
             "trial_id",
             "trial_name",
             "trial_length",
@@ -708,7 +720,10 @@ class ParsedNWBFile:
         return
 
     def save_to_mat(self):
-        # breakpoint()
+
+        self.purge_nan_columns()
+        breakpoint()
+
         path_to_save = (
             self.nwbfile_path.parent / f"{self.nwbfile_path.parent.name}_pyaldata.mat"
         )
