@@ -1,41 +1,40 @@
 ![Tests](https://github.com/BeNeuroLab/beneuro_experimental_data_organization/actions/workflows/run_tests.yml/badge.svg)
 
-This is a collection of functions for managing the experimental data recorded in the BeNeuro Lab, and a CLI tool called `bnd` for easy access to this functionality.
+This is a collection of functions for managing the experimental data recorded in the 
+BeNeuro Lab, and a CLI tool called `bnd` for easy access to this functionality.
 
-Features so far:
-- validating raw experimental data on the computers doing the recording
-- uploading experimental data to the RDS server
-- downloading experimental data from the RDS server
-- running spike sorting
+# Pipeline
+The intended pipeline of use of `bnd` is as follows:
 
-Features on the way:
-- checking and uploading automatically on a schedule
-- converting processed data to NWB
-- converting NWB to TrialData
-
+After you recorded an experimental session in the lab PCs:
+```shell
+# From the lab PC
+$ bnd up MXX  # Uploads latest session of animal MXX to RDS
+```
+On your local PC:
+```shell
+$ bnd dl MXX  # Download latest session of animal MXX from RDS to local PC
+$ bnd kilosort-session <local/path/to/session> MXX  # Kilosorts session and saves in local processed
+$ bnd to-nwb <local/path/to/session> MXX  # Converts data to .nwb format
+$ bnd nwb-to-pyaldata MXX_2024_01_01_09_00  # Convert session into pyaldata format
+```
 # Setting up
 ## Installation
-1. Create an empty conda environment in which you will install the tool. The environment only needs Python and pip.
-   You can do this with `mamba create -n bnd python pip`.
-
-   Alternatively you can install with the system Python, but that's not really recommended. If you have conda/mamba on the computer, just use that for a peace of mind for now.
-
-   You will also need [poetry](https://python-poetry.org). If you don't already have it installed, follow one of installation methods [here](https://python-poetry.org/docs/#installation), which on Linux will most likely be one of the following:
-
-     `pipx install poetry`
-
-     `curl -sSL https://install.python-poetry.org | python3 -`
-
-   (Note that it is not advised to install poetry in the environment you just created.)
-
-1. Clone this repo
+1. You will need the environment management tool [poetry](https://python-poetry.org). We 
+   recommend using the official installer:
+    - On Linux, MacOS or WSL:`curl -sSL https://install.python-poetry.org | python3 -`
+    - On Windows Powershell: `(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -`
    
-    `git clone https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git`
-1. Navigate into the folder you just downloaded (`beneuro_experimental_data_organization`)
-1. Activate the environment you installed in.
+2. Clone this repo:`git clone https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git`
 
-     `conda activate bnd`
-1. Install the package with either
+3. Navigate into the folder you just downloaded (`beneuro_experimental_data_organization`)
+4. Create the enviroment associated to the project:
+
+     `poetry shell`
+
+    This will generate a virtualenv where you install all the packages needed for `bnd` 
+   and activate it
+5. Install the package with either
 
      `poetry install`
 
@@ -45,11 +44,20 @@ Features on the way:
 
    For more info, see the [spike sorting instructions](#spike-sorting).
 
-1. Test that the install worked with
+6. Test that the install worked with
 
      `poetry run pytest`
 
    Hopefully you'll see green on the bottom (some yellow is fine) meaning that all tests pass :)
+
+
+> Note:
+>
+> If you want to make the environment activation a bit more straightforward instead of 
+> navigating to the folder and running `poetry shell` you can make an alias in your 
+> terminal app:
+> - Windows:
+
 
 ## Configuring the local and remote data storage
 The tool needs to know where the experimental data is stored locally and remotely.
@@ -73,42 +81,6 @@ The tool needs to know where the experimental data is stored locally and remotel
 ## Help
 - To see the available commands: `bnd --help`
 - To see the help of a command (e.g. `rename-videos`): `bnd rename-videos --help`
-## Data validation
-- You can validate the structure of raw data for an individual session:
-  - `bnd validate-session . <subject-name>` if you're in the session's directory
-  - `bnd validate-session /absolute/path/to/session/folder <subject-name>` from anywhere
-  - `bnd validate-last <subject-name>` from anywhere to validate the last recorded session
-  - `bnd validate-today` from anywhere to validate all recorded sessions on the current day
-    - If it's trying to validate things in places like "treadmill-calibration" that are on the same level as subject directories, you can exclude checking in those places
-    by adding them to `IGNORED_SUBJECT_LEVEL_DIRS` in the `.env` config file (`IGNORED_SUBJECT_LEVEL_DIRS = ["treadmill-calibration", "other-stuff-you-want-to-ignore"]`)
-    - `bnd list-today` lets you check what sessions were recorded on the current day
- 
-  This will give you an error if there is a problem with the file structure.
-
-  The name of the subject is used for confirmation, but might be removed in the future if it's too annoying.
-
-- or for all sessions of a subject:
-  - `bnd validate-sessions <subject-name>`
- 
-  This will give you an overview which sessions look good and which ones have a problem.
-
-By default behavioral, ephys, and video data are all checked. To control which kind of data you want to check:
-- To exclude checking something: `--ignore-behavior`, `--ignore-ephys`, `--ignore-videos`
-- To explicitly include something: `--check-behavior`, `--check-ephys`, `--check-videos`
-
-Please note that running validation will only give you the first problem that pops up. Once you fixed that, run it again to see if there are others ;)
- 
-## Renaming the videos
-The default naming Jarvis uses for the video folder and files doesn't match the convention we want to follow.
-
-Files can be renamed with `bnd rename-videos . <subject-name>` (or specifying the path instead of `.` if the current working directory is not the session's directory).
-
-Add `--verbose` to the end to see what files were renamed.
-
-## Renaming the extra files
-Sometimes the experimenter leaves comments in a `comment.txt` file or saves some extra `.txt` files in the electrophysiology recording folders.
-
-To rename these files to follow the naming convention of `<session-name>_<filename>`, you can use the `bnd rename-extra-files` command.
 
 ## Uploading the data
 Once you're done recording a session, you can upload that session to the server with:
@@ -159,6 +131,43 @@ Keeping binary files useful for Phy:
 Suppressing output:
 
   `bnd kilosort-session . M020 --no-verbose`
+
+## Data validation
+- You can validate the structure of raw data for an individual session:
+  - `bnd validate-session . <subject-name>` if you're in the session's directory
+  - `bnd validate-session /absolute/path/to/session/folder <subject-name>` from anywhere
+  - `bnd validate-last <subject-name>` from anywhere to validate the last recorded session
+  - `bnd validate-today` from anywhere to validate all recorded sessions on the current day
+    - If it's trying to validate things in places like "treadmill-calibration" that are on the same level as subject directories, you can exclude checking in those places
+    by adding them to `IGNORED_SUBJECT_LEVEL_DIRS` in the `.env` config file (`IGNORED_SUBJECT_LEVEL_DIRS = ["treadmill-calibration", "other-stuff-you-want-to-ignore"]`)
+    - `bnd list-today` lets you check what sessions were recorded on the current day
+ 
+  This will give you an error if there is a problem with the file structure.
+
+  The name of the subject is used for confirmation, but might be removed in the future if it's too annoying.
+
+- or for all sessions of a subject:
+  - `bnd validate-sessions <subject-name>`
+ 
+  This will give you an overview which sessions look good and which ones have a problem.
+
+By default behavioral, ephys, and video data are all checked. To control which kind of data you want to check:
+- To exclude checking something: `--ignore-behavior`, `--ignore-ephys`, `--ignore-videos`
+- To explicitly include something: `--check-behavior`, `--check-ephys`, `--check-videos`
+
+Please note that running validation will only give you the first problem that pops up. Once you fixed that, run it again to see if there are others ;)
+ 
+## Renaming the videos
+The default naming Jarvis uses for the video folder and files doesn't match the convention we want to follow.
+
+Files can be renamed with `bnd rename-videos . <subject-name>` (or specifying the path instead of `.` if the current working directory is not the session's directory).
+
+Add `--verbose` to the end to see what files were renamed.
+
+## Renaming the extra files
+Sometimes the experimenter leaves comments in a `comment.txt` file or saves some extra `.txt` files in the electrophysiology recording folders.
+
+To rename these files to follow the naming convention of `<session-name>_<filename>`, you can use the `bnd rename-extra-files` command.
 
 
 
