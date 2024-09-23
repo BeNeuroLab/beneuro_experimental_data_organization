@@ -44,9 +44,9 @@ def _bin_spikes(probe_units: Units, bin_size: float) -> np.array:
     for neuron_id in probe_units.id[:]:
         spike_times = probe_units.get_unit_spike_times(neuron_id)
         for spike_time in spike_times:
-            if start_time <= spike_time < end_time:
-                bin_index = int((spike_time - start_time) / bin_size)
-                binned_spikes[neuron_id, bin_index] += 1
+            # if start_time <= spike_time < end_time:
+            bin_index = int(spike_time / bin_size)
+            binned_spikes[neuron_id, bin_index] += 1
 
     return binned_spikes
 
@@ -57,27 +57,26 @@ def _add_unit_counter_to_unit_guide(unit_guide):
         "_add_unit_counter_to_unit_guide() is deprecated. Unit guides are now called chan_best"
         " and do not have a second column"
     )
-
     return
 
-    # Initialize the counter and new_unit_guide
-    counter = 1
-    new_unit_guide = []
-
-    # Iterate through the array
-    for i in range(len(unit_guide)):
-        if i > 0 and unit_guide[i] == unit_guide[i - 1]:
-            # Increment counter if the current value is the same as the previous one
-            counter += 1
-        else:
-            # Reset the counter if the value changes
-            counter = 1
-
-        new_unit_guide.append([unit_guide[i], counter])
-
-    # Convert the new array to a NumPy array
-    new_unit_guide = np.array(new_unit_guide)
-    return new_unit_guide
+    # # Initialize the counter and new_unit_guide
+    # counter = 1
+    # new_unit_guide = []
+    #
+    # # Iterate through the array
+    # for i in range(len(unit_guide)):
+    #     if i > 0 and unit_guide[i] == unit_guide[i - 1]:
+    #         # Increment counter if the current value is the same as the previous one
+    #         counter += 1
+    #     else:
+    #         # Reset the counter if the value changes
+    #         counter = 1
+    #
+    #     new_unit_guide.append([unit_guide[i], counter])
+    #
+    # # Convert the new array to a NumPy array
+    # new_unit_guide = np.array(new_unit_guide)
+    # return new_unit_guide
 
 
 def _parse_pynwb_probe(
@@ -661,21 +660,25 @@ class ParsedNWBFile:
         )
         return
 
-    def purge_nan_columns(self):
+    def purge_nan_columns(self, column_subset='values_'):
         """
         Remove columns that are all nans
         """
+        columns_to_select = [col for col in self.pyaldata_df.columns if col.startswith(column_subset)]
+
         def _is_empty_array_or_nans(value):
             if isinstance(value, np.ndarray):
-                if not value.shape or all(item == np.nan for item in value):
+                if value.ndim != 0 and all(np.isnan(item) for item in value):
                     return True
+                elif value.ndim == 0 and not np.isnan(value.item()):
+                    return False
             elif value == np.nan:
                 return True
             else:
                 return False
 
-        for col_name, col_data in self.pyaldata_df.items():
-            if all(col_data.apply(_is_empty_array_or_nans)):
+        for col_name in columns_to_select:
+            if self.pyaldata_df[col_name].apply(_is_empty_array_or_nans).all():
                 self.pyaldata_df.drop(col_name, axis=1, inplace=True)
 
         return
