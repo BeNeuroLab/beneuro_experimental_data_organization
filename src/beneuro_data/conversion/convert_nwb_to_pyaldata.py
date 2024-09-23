@@ -529,7 +529,7 @@ class ParsedNWBFile:
         self.pyaldata_df["bin_size"] = self.bin_size
 
         # Start and stop times of each state
-        self.pyaldata_df["idx_trial_start"] = np.ceil(
+        self.pyaldata_df["idx_trial_start"] = np.floor(
             self.pycontrol_states.start_time.values[:] / 1000 / self.bin_size
         ).astype(int)
         self.pyaldata_df["idx_trial_end"] = np.floor(
@@ -729,6 +729,7 @@ class ParsedNWBFile:
 
     def save_to_mat(self):
 
+        # Get rid of nan columns
         self.purge_nan_columns()
 
         path_to_save = (
