@@ -41,12 +41,17 @@ def _bin_spikes(probe_units: Units, bin_size: float) -> np.array:
     binned_spikes = np.zeros((len(probe_units.id[:]), number_of_bins), dtype=int)
 
     # Populate the binned spikes array
-    for neuron_id in probe_units.id[:]:
+    for neuron_id in probe_units.id:
         spike_times = probe_units.get_unit_spike_times(neuron_id)
-        for spike_time in spike_times:
-            # if start_time <= spike_time < end_time:
-            bin_index = int(spike_time / bin_size)
-            binned_spikes[neuron_id, bin_index] += 1
+
+        # Taks spikes from after start time
+        spike_times = spike_times[spike_times >= start_time]
+
+        # Bin the spikes with flooring round
+        bin_indices = (spike_times / bin_size).astype(int)
+
+        # Add them to the corresponding bin.
+        np.add.at(binned_spikes, (neuron_id, bin_indices), 1)
 
     return binned_spikes
 
@@ -725,7 +730,6 @@ class ParsedNWBFile:
     def save_to_mat(self):
 
         self.purge_nan_columns()
-        breakpoint()
 
         path_to_save = (
             self.nwbfile_path.parent / f"{self.nwbfile_path.parent.name}_pyaldata.mat"
