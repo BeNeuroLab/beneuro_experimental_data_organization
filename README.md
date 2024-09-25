@@ -9,46 +9,45 @@ The intended pipeline of use of `bnd` is as follows:
 After you recorded an experimental session in the lab PCs:
 ```shell
 # From the lab PC
-$ bnd up MXX  # Uploads latest session of animal MXX to RDS
+$ bnd upload-last MXX  # Uploads latest session of animal MXX to RDS
 ```
 On your local PC:
 ```shell
-$ bnd dl MXX  # Download latest session of animal MXX from RDS to local PC
+$ bnd download-last MXX  # Download latest session of animal MXX from RDS to local PC
 $ bnd kilosort-session <local/path/to/session> MXX  # Kilosorts session and saves in local processed
 $ bnd to-nwb <local/path/to/session> MXX  # Converts data to .nwb format
 $ bnd nwb-to-pyaldata MXX_2024_01_01_09_00  # Convert session into pyaldata format
+$ bnd upload-last MXX_2024_01_01_09_00  # Still pending. Uploads nwb and pyaldata to rds processed
 ```
 # Setting up
 ## Installation
 1. You will need the environment management tool [poetry](https://python-poetry.org). We 
    recommend using the official installer:
-    - On Linux, MacOS or WSL:`curl -sSL https://install.python-poetry.org | python3 -`
-    - On Windows Powershell: `(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -`
+    - On Linux, MacOS or WSL:
+        ```shell
+        $ curl -sSL https://install.python-poetry.org | python3 -
+        ```
+    - On Windows Powershell: 
+        ```shell
+        $ (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
+        ```
+      - You may need to add poetry to $PATH environment variable
+
    
-2. Clone this repo:`git clone https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git`
+2. Clone this repo:
+   ```shell
+   $ git clone https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git
+   ```
 
 3. Navigate into the folder you just downloaded (`beneuro_experimental_data_organization`)
-4. Create the enviroment associated to the project:
+4. Create the environment associated to the project: `poetry shell`. This will generate a 
+   virtualenv where you install all the packages needed for `bnd` and activate it
+5. Install the package with either `poetry install` or if you want processing 
+   functionality: `poetry install --with processing`. For more info, see the [spike 
+   sorting instructions](#spike-sorting).
 
-     `poetry shell`
-
-    This will generate a virtualenv where you install all the packages needed for `bnd` 
-   and activate it
-5. Install the package with either
-
-     `poetry install`
-
-   or if you want spike sorting functionality:
-
-     `poetry install --with processing`
-
-   For more info, see the [spike sorting instructions](#spike-sorting).
-
-6. Test that the install worked with
-
-     `poetry run pytest`
-
-   Hopefully you'll see green on the bottom (some yellow is fine) meaning that all tests pass :)
+6. Test that the installation worked with: `poetry run pytest`. Hopefully you'll see 
+   green on the bottom (some yellow is fine) meaning that all tests pass :)
 
 
 > Note:
@@ -77,7 +76,7 @@ The tool needs to know where the experimental data is stored locally and remotel
 2. Run `bnd check-config` to verify that the folders in the config have the expected `raw` and `processed` folders within them.
 
 
-# Usage
+# CLI usage
 ## Help
 - To see the available commands: `bnd --help`
 - To see the help of a command (e.g. `rename-videos`): `bnd rename-videos --help`
