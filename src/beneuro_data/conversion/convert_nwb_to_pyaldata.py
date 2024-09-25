@@ -665,9 +665,19 @@ class ParsedNWBFile:
         )
         return
 
-    def purge_nan_columns(self, column_subset='values_'):
+    def purge_nan_columns(self, column_subset='values_') -> None:
         """
         Remove columns that are all nans
+
+
+        Parameters
+        ----------
+        column_subset :
+            String expression to look for in columns to be purged. Defaults to 'values_'
+
+        Returns
+        -------
+
         """
         columns_to_select = [col for col in self.pyaldata_df.columns if col.startswith(column_subset)]
 
@@ -685,6 +695,30 @@ class ParsedNWBFile:
         for col_name in columns_to_select:
             if self.pyaldata_df[col_name].apply(_is_empty_array_or_nans).all():
                 self.pyaldata_df.drop(col_name, axis=1, inplace=True)
+
+        return
+
+    def expand_dim_in_single_bin_trials(self, column_subset='_spikes') -> None:
+        """
+        Expand 1D arrays in length one trials
+
+        Parameters
+        ----------
+        column_subset :
+            String expression to look for in columns to be expanded. Defaults to 'spikes_'
+
+        Returns
+        -------
+
+        """
+        def _expand_dim_in_single_bin_trial(value):
+            if isinstance(value, np.ndarray):
+                return np.expand_dims(value, axis=1)
+
+        trial_length_1_df = self.pyaldata_df.query('trial_length == 1')
+        for column in trial_length_1_df.columns:
+            if column_subset in column:
+                trial_length_1_df[column].apply(_expand_dim_in_single_bin_trial)
 
         return
 
@@ -725,13 +759,16 @@ class ParsedNWBFile:
 
         # Add general information
         self.add_mouse_and_datetime()
+
+        # Purge nan columns
+        self.purge_nan_columns()
+
+        # Expand dimensions
+        self.expand_dim_in_single_bin_trials()
+
         return
 
     def save_to_mat(self):
-
-        # Get rid of nan columns
-        self.purge_nan_columns()
-
         path_to_save = (
             self.nwbfile_path.parent / f"{self.nwbfile_path.parent.name}_pyaldata.mat"
         )
