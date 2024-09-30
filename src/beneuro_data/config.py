@@ -2,6 +2,7 @@ from pathlib import Path
 
 from pydantic.v1 import BaseSettings
 
+
 def _get_package_path() -> Path:
     """
     Returns the path to the package directory.
