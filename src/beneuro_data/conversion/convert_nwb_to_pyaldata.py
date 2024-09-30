@@ -657,9 +657,9 @@ class ParsedNWBFile:
                     )
         return
 
-    def add_mouse_and_datetime(self):
+    def add_mouse_and_session(self):
         self.pyaldata_df["animal"] = [self.subject_id] * len(self.pyaldata_df)
-        self.pyaldata_df["datetime"] = (
+        self.pyaldata_df["session"] = (
             [self.nwbfile_path.name[5:-4]]
             * len(self.pyaldata_df)
         )
@@ -736,7 +736,7 @@ class ParsedNWBFile:
         # Define all the necessary columns
         columns = [
             "animal",
-            "datetime",
+            "session",
             "trial_id",
             "trial_name",
             "trial_length",
@@ -758,7 +758,7 @@ class ParsedNWBFile:
         self.add_spiking_data_to_df()
 
         # Add general information
-        self.add_mouse_and_datetime()
+        self.add_mouse_and_session()
 
         # Purge nan columns
         self.purge_nan_columns()
