@@ -72,15 +72,9 @@ def nwb_to_pyaldata(
 
 @app.command()
 def to_nwb(
-    local_session_path: Annotated[
-        Path,
-        typer.Argument(help="Path to session directory. Can be relative or absolute"),
-    ],
-    subject_name: Annotated[
+    session_name: Annotated[
         str,
-        typer.Argument(
-            help="Name of the subject the session belongs to. (Used for confirmation.)"
-        ),
+        typer.Argument(help="Session name to convert"),
     ],
     run_kilosort: Annotated[
         bool,
@@ -127,20 +121,22 @@ def to_nwb(
 
     \b
     Basic usage:
-        `bnd to-nwb . M037`
+        `bnd to-nwb M037_2024_01_01_10_00`
 
     \b
     Run Kilosort:
-        `bnd to-nwb . M037 --kilosort`
+        `bnd to-nwb M037_2024_01_01_10_00 --kilosort`
 
     \b
     Running Kilosort on only selected probes:
-        `bnd to-nwb . M037 --sort-probe imec0 --sort-probe imec1`
+        `bnd to-nwb M037_2024_01_01_10_00 --sort-probe imec0 --sort-probe imec1`
     """
     # this will throw an error if the dependencies are not available
     from beneuro_data.conversion.convert_to_nwb import convert_to_nwb
 
     config = _load_config()
+    local_session_path = config.get_local_session_path(session_name, 'raw')
+    subject_name = config.get_animal_name(session_name)
 
     if not local_session_path.absolute().is_dir():
         raise ValueError("Session path must be a directory.")
