@@ -402,13 +402,10 @@ def dl(
 
 @app.command()
 def kilosort_session(
-    local_session_path: Annotated[
-        Path, typer.Argument(help="Path to session directory. Can be relative or absolute")
-    ],
-    subject_name: Annotated[
+    session_name: Annotated[
         str,
         typer.Argument(
-            help="Name of the subject the session belongs to. (Used for confirmation.)"
+            help="Session name to convert"
         ),
     ],
     probes: Annotated[
@@ -435,25 +432,27 @@ def kilosort_session(
 
     \b
     Basic usage:
-        `bnd kilosort-session . M020`
+        `bnd kilosort-session M020_2024_01_01_10_00`
 
     \b
     Only sorting specific probes:
-        `bnd kilosort-session . M020 imec0`
-        `bnd kilosort-session . M020 imec0 imec1`
+        `bnd kilosort-session M020_2024_01_01_10_00 imec0`
+        `bnd kilosort-session M020_2024_01_01_10_00 imec0 imec1`
 
     \b
     Keeping binary files useful for Phy:
-        `bnd kilosort-session . M020 --keep-temp-files`
+        `bnd kilosort-session M020_2024_01_01_10_00 --keep-temp-files`
 
     \b
     Suppressing output:
-        `bnd kilosort-session . M020 --no-verbose`
+        `bnd kilosort-session M020_2024_01_01_10_00 --no-verbose`
     """
     # this will throw an error if the dependencies are not available
     from beneuro_data.spike_sorting import run_kilosort_on_session_and_save_in_processed
 
     config = _load_config()
+    local_session_path = config.get_local_session_path(session_name, 'raw')
+    subject_name = config.get_animal_name(session_name)
 
     if not local_session_path.absolute().is_dir():
         raise ValueError("Session path must be a directory.")
