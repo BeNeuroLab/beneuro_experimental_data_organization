@@ -20,8 +20,8 @@ def test_nwb_to_pyaldata(session_name):
     assert len(nwbfiles) == 1
 
     # delete existing NWB file
-    for nwb_file_path in local_session_path.glob("*.mat"):
-        nwb_file_path.unlink()
+    for mat_file in local_session_path.glob("*.mat"):
+        mat_file.unlink()
 
     nwbfile_path = nwbfiles[0].absolute()
 
