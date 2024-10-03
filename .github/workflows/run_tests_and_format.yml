@@ -25,7 +25,7 @@ jobs:
     - name: Install project
       run: poetry install
     - name: Run Ruff linting
-      run: poetry run ruff --fix
+      run: poetry run ruff check --fix
     - name: Run Ruff formatting
       run: poetry run ruff format
     - name: Run pytest
