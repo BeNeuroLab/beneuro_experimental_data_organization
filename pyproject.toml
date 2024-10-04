@@ -39,11 +39,8 @@ bnd = "beneuro_data.cli:app"
 [tool.ruff]
 line-length = 92
 
-[tool.ruff.lint]
-select = [
-    # isort
-    "I",
-]
+#[tool.ruff.lint]
+#extend-select = ["I", "W291", "F401"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
