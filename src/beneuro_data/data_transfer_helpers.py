@@ -141,7 +141,7 @@ def _validate_session_is_raw_and_in_root(session_path: Path, base_path: Path) ->
             f"Session path is not a subdirectory of the local root: {session_path}"
         )
     # 2 make sure the session_path has "raw" in it
-    if not ("raw" in session_path.parts):
+    if "raw" not in session_path.parts:
         raise ValueError(
             f"Trying to upload a raw session, but the session's path does not contain 'raw': {session_path}"
         )

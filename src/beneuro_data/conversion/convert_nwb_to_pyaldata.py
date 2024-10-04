@@ -454,7 +454,7 @@ class ParsedNWBFile:
 
         """
         if "Position" not in self.behavior.keys():
-            warnings.warn(f"No motion data available")
+            warnings.warn("No motion data available")
             self.pycontrol_motion_sensors = np.nan
             return
 
@@ -475,7 +475,7 @@ class ParsedNWBFile:
 
         """
         if "Pose estimation" not in self.behavior.keys():
-            warnings.warn(f"No anipose data available")
+            warnings.warn("No anipose data available")
             return
 
         if self.verbose:
@@ -774,7 +774,7 @@ class ParsedNWBFile:
                     .strip()
                 )
                 if user_input == "y":
-                    print(f"Saving file...")
+                    print("Saving file...")
                     data_array = self.pyaldata_df.to_records(index=False)
                     scipy.io.savemat(path_to_save, {"pyaldata": data_array})
                     print(f"File '{path_to_save}' has been overwritten.")
@@ -785,7 +785,7 @@ class ParsedNWBFile:
                 else:
                     print("Please enter 'y' for yes or 'n' for no.")
         else:
-            print(f"Saving file...")
+            print("Saving file...")
             data_array = self.pyaldata_df.to_records(index=False)
             scipy.io.savemat(path_to_save, {"pyaldata": data_array})
             print(f"Saved pyaldata file in {path_to_save}")
