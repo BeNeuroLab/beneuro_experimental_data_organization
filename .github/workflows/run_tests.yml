@@ -24,9 +24,5 @@ jobs:
       run: pip install poetry
     - name: Install project
       run: poetry install
-    - name: Run Ruff linting
-      run: poetry run ruff check --fix --output-format=github .
-    - name: Run Ruff formatting
-      run: poetry run ruff format
     - name: Run pytest
       run: poetry run pytest --ignore=tests/conversion

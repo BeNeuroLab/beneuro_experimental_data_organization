@@ -85,7 +85,7 @@ def test_pyaldata_loading_and_format(session_name):
 
     # Assert that all expected columns are present
     # TODO: Add some more thorough checking on the data structure.
-    assert all(df['session'] == session_name)
+    assert all(df["session"] == session_name)
     assert set(expected_columns).issubset(
         df.columns
     ), f"Missing columns: {set(expected_columns) - set(df.columns)}"
