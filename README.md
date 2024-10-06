@@ -105,7 +105,8 @@ Run the following command inside the directory of the project.
 $ poetry run pre-commit install
 ```
 Now, every time you commit, the tool `ruff` will automatically check your code, fix it 
-when possible, and reformat it. 
+when possible, and reformat it. If `ruff` has to fix your code it will consider the 
+commit a Fail but it will fix it automatically so no need to worry. 
 
 
 # CLI usage
