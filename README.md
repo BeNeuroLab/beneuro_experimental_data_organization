@@ -96,6 +96,8 @@ The tool needs to know where the experimental data is stored locally and remotel
 
 2. Run `bnd check-config` to verify that the folders in the config have the expected `raw` and `processed` folders within them.
 
+## Linting and formatting
+explanation goes here
 
 # CLI usage
 ## Help
