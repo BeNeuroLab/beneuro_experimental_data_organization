@@ -58,7 +58,7 @@ def nwb_to_pyaldata(
     from beneuro_data.conversion.convert_nwb_to_pyaldata import convert_nwb_to_pyaldata
 
     config = _load_config()
-    local_session_path = config.get_local_session_path(session_name, "processed")
+    local_session_path = config.get_local_session_path(session_name, "raw")
 
     if not local_session_path.absolute().is_dir():
         raise ValueError("Session path must be a directory.")
@@ -216,7 +216,7 @@ def download_last(
     #    ),
     # ] = True,
     processing_level: Annotated[
-        str, typer.Argument(help="Processing level of the session. raw or processed.")
+        str, typer.Argument(help="Processing level of the session must be raw.")
     ] = "raw",
     include_kilosort: Annotated[
         bool,
@@ -343,7 +343,7 @@ def download_session(
     #    ),
     # ] = True,
     processing_level: Annotated[
-        str, typer.Argument(help="Processing level of the session. raw or processed.")
+        str, typer.Argument(help="Processing level of the session must be raw.")
     ] = "raw",
     include_kilosort: Annotated[
         bool,
@@ -435,7 +435,7 @@ def dl(
         ),
     ] = False,
     processing_level: Annotated[
-        str, typer.Argument(help="Processing level of the session. raw or processed.")
+        str, typer.Argument(help="Processing level of the session must be raw.")
     ] = "raw",
     include_kilosort: Annotated[
         bool,
@@ -520,7 +520,7 @@ def kilosort_session(
     ] = True,
 ):
     """
-    Run Kilosort 4 on a session and save the results in the processed folder.
+    Run Kilosort 4 on a session and save the results in the raw folder.
 
     Note that you will need some extra dependencies that are not installed by default. You can install them by running `poetry install --with processing` in bnd's root folder.
 
@@ -542,7 +542,7 @@ def kilosort_session(
         `bnd kilosort-session M020_2024_01_01_10_00 --no-verbose`
     """
     # this will throw an error if the dependencies are not available
-    from beneuro_data.spike_sorting import run_kilosort_on_session_and_save_in_processed
+    from beneuro_data.spike_sorting import run_kilosort_on_session_and_save_in_raw
 
     config = _load_config()
     local_session_path = config.get_local_session_path(session_name, "raw")
@@ -569,7 +569,7 @@ def kilosort_session(
     else:
         stream_names_to_process = None
 
-    run_kilosort_on_session_and_save_in_processed(
+    run_kilosort_on_session_and_save_in_raw(
         local_session_path.absolute(),
         subject_name,
         config.LOCAL_PATH,
@@ -592,7 +592,7 @@ def validate_session(
         ),
     ],
     processing_level: Annotated[
-        str, typer.Argument(help="Processing level of the session. raw or processed.")
+        str, typer.Argument(help="Processing level of the session must be raw.")
     ] = "raw",
     check_behavior: Annotated[
         bool,
@@ -673,7 +673,7 @@ def validate_last(
         ),
     ],
     processing_level: Annotated[
-        str, typer.Argument(help="Processing level of the session. raw or processed.")
+        str, typer.Argument(help="Processing level of the session must be raw.")
     ] = "raw",
     check_locally: Annotated[
         bool,
@@ -764,7 +764,7 @@ def rename_videos(
         ),
     ],
     processing_level: Annotated[
-        str, typer.Argument(help="Processing level of the session. raw or processed.")
+        str, typer.Argument(help="Processing level of the session must be raw.")
     ] = "raw",
     verbose: Annotated[
         bool,
@@ -885,7 +885,7 @@ def upload_session(
         ),
     ] = True,
     processing_level: Annotated[
-        str, typer.Argument(help="Processing level of the session. raw or processed.")
+        str, typer.Argument(help="Processing level of the session must be raw.")
     ] = "raw",
     include_nwb: Annotated[
         bool,
@@ -1011,7 +1011,7 @@ def up(
         ),
     ] = True,
     processing_level: Annotated[
-        str, typer.Argument(help="Processing level of the session. raw or processed.")
+        str, typer.Argument(help="Processing level of the session must be raw.")
     ] = "raw",
     include_nwb: Annotated[
         bool,
@@ -1154,7 +1154,7 @@ def upload_last(
         ),
     ] = True,
     processing_level: Annotated[
-        str, typer.Argument(help="Processing level of the session. raw or processed.")
+        str, typer.Argument(help="Processing level of the session must be raw.")
     ] = "raw",
     include_nwb: Annotated[
         bool,
@@ -1254,7 +1254,7 @@ def validate_sessions(
     subject_name: Annotated[str, typer.Argument(help="Subject name.")],
     processing_level: Annotated[
         str,
-        typer.Argument(help="Processing level of the session. raw or processed."),
+        typer.Argument(help="Processing level of the session must be raw."),
     ],
     check_locally: Annotated[
         bool,
@@ -1354,7 +1354,7 @@ def validate_sessions(
 def list_today(
     processing_level: Annotated[
         str,
-        typer.Argument(help="Processing level of the session. raw or processed."),
+        typer.Argument(help="Processing level of the session. raw ."),
     ] = "raw",
     check_locally: Annotated[
         bool,
@@ -1364,8 +1364,8 @@ def list_today(
     """
     List all sessions of all subjects that happened today.
     """
-    if processing_level not in ["raw", "processed"]:
-        raise ValueError("Processing level must be raw or processed.")
+    if processing_level not in ["raw"]:
+        raise ValueError("Processing level must be raw.")
 
     config = _load_config()
     root_path = config.LOCAL_PATH if check_locally else config.REMOTE_PATH
@@ -1388,7 +1388,7 @@ def list_today(
 def validate_today(
     processing_level: Annotated[
         str,
-        typer.Argument(help="Processing level of the session. raw or processed."),
+        typer.Argument(help="Processing level of the session must be raw."),
     ] = "raw",
     check_locally: Annotated[
         bool,
