@@ -32,9 +32,6 @@ dependencies:
   - pip=24.3.1
   - pkginfo=1.11.2
   - platformdirs=4.3.6
-  - poetry=1.8.4
-  - poetry-core=1.9.1
-  - poetry-plugin-export=1.8.0
   - ptyprocess=0.7.0
   - pycparser=2.22
   - pyproject_hooks=1.2.0
@@ -53,7 +50,6 @@ dependencies:
   - trove-classifiers=2024.10.21.16
   - urllib3=2.2.3
   - wheel=0.45.1
-  - win_inet_pton=1.1.0
   - xz=5.2.6
   - zipp=3.21.0
   - zstandard=0.23.0
