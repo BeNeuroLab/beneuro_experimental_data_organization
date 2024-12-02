@@ -19,7 +19,6 @@ def _get_env_path() -> Path:
 
 
 class Config(BaseSettings):
-    REPO_PATH: Path = Path.cwd()
     LOCAL_PATH: Path
     REMOTE_PATH: Path
     IGNORED_SUBJECT_LEVEL_DIRS: tuple[str, ...] = ("treadmill-calibration",)
