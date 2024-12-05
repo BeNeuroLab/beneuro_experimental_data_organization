@@ -1608,7 +1608,7 @@ def self_update(
         typer.Option(
             "-m",
             "--method",
-            help="Specify the installation method: 'conda' (-c) or 'poetry' (-p).",
+            help="Specify the installation method: 'conda' or 'poetry'.",
             case_sensitive=False,
         ),
     ],
