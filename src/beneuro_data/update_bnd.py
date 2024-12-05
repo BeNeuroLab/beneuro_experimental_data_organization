@@ -56,12 +56,10 @@ def _get_new_commits(repo_path: Path) -> list[str]:
     repo_path = Path(repo_path)
 
     # Fetch the latest changes from the remote repository
-    _run_git_command(repo_path, ["fetch", "origin", "setup-new-install"])
+    _run_git_command(repo_path, ["fetch"])
 
     # Check if origin/main has new commits compared to the local branch
-    new_commits = _run_git_command(
-        repo_path, ["log", "HEAD..origin/setup-new-install", "--oneline"]
-    )
+    new_commits = _run_git_command(repo_path, ["log", "HEAD..origin/main", "--oneline"])
 
     # filter empty lines and strip whitespaces
     return [commit.strip() for commit in new_commits.split("\n") if commit.strip() != ""]
