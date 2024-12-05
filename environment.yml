@@ -1,11 +1,11 @@
-name: bnd-pip
+name: bnd
 channels:
   - conda-forge
 dependencies:
   - pip=24.3.1
   - python=3.10.15
   - pip:
-      - git+https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git
+      - git+https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git#egg=beneuro_data
       - cuda-python==12.6.0
       - docker==7.1.0
       - ndx-pose==0.1.1

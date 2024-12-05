@@ -3,6 +3,8 @@ from pathlib import Path
 
 from rich import print
 
+from beneuro_data.config import _load_config
+
 
 def _run_git_command(repo_path: Path, command: list[str]) -> str:
     """
@@ -84,7 +86,7 @@ def check_for_updates() -> bool:
     return False
 
 
-def update_bnd(print_new_commits: bool = False) -> None:
+def update_bnd_poetry(print_new_commits: bool = False) -> None:
     """
     Update the package to the latest version from origin/main.
 
@@ -123,3 +125,34 @@ def update_bnd(print_new_commits: bool = False) -> None:
                 print(f" - {commit}")
     else:
         print("Package appears to be up to date, no new commits found.")
+
+
+def update_bnd_conda(verbose: bool = False) -> None:
+    """
+    Update bnd if it was installed with conda
+
+
+    Parameters
+    ----------
+    verbose
+    """
+    config = _load_config()
+
+    new_commits = _get_new_commits(config.REPO_PATH)
+
+    if len(new_commits) == 0:
+        print("Package appears to be up to date, no new commits found.")
+    else:
+        print("New commits found, pulling changes...")
+
+        # Update code
+        _run_git_command(config.REPO_PATH, ["pull", "origin", "main"])
+
+        verbose_flag = ""
+        if not verbose:
+            verbose_flag = "--quiet"
+
+        # Update package
+        subprocess.run(
+            ["pip", "insall", "--updagrade", f"git+{config.REPO_URL}", f"{verbose_flag}"]
+        )
