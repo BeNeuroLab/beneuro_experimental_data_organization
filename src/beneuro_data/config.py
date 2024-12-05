@@ -19,6 +19,7 @@ def _get_env_path() -> Path:
 
 
 class Config(BaseSettings):
+    REPO_PATH: Path
     LOCAL_PATH: Path
     REMOTE_PATH: Path
     IGNORED_SUBJECT_LEVEL_DIRS: tuple[str, ...] = ("treadmill-calibration",)
@@ -29,6 +30,7 @@ class Config(BaseSettings):
         "channel_map.txt",
     )
     EXTENSIONS_TO_RENAME_AND_UPLOAD: tuple[str, ...] = (".txt",)
+    REPO_URL = "https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git"
 
     @staticmethod
     def get_animal_name(session_name) -> str:

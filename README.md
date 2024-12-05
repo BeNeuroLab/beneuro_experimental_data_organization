@@ -20,23 +20,48 @@ $ bnd nwb-to-pyaldata MXX_2024_01_01_09_00  # Convert session into pyaldata form
 $ bnd up MXX_2024_01_01_09_00  # Still pending. Uploads nwb and pyaldata to rds processed
 ```
 # Setting up
-## Installation
+## Installation (user)
+If you just want to use bnd without the hassle of going through poetry we can do this 
+with conda
+1. Install `conda`
+   - You can use either [Miniconda](https://docs.anaconda.com/miniconda/install/#quick-command-line-install) or [Miniforge](https://github.com/conda-forge/miniforge)
+2. Clone repo
+   ```shell
+   git clone https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git
+   cd ./beneuro_experimental_data_organization
+   ```
+3. Open either Miniconda prompt or Miniforge promt and run the following command. This 
+   may take some time: 
+   ```shell
+   conda env create --file environment.yml
+   ```
+2. Activate environments and check tests pass:
+   ```shell
+   # Activate bnd
+   conda activate bnd
+   
+   # Run tests
+   pytest 
+   ```
+3. Hopefully all tests passed!
+## Installation (dev)
 1. You will need the environment management tool [poetry](https://python-poetry.org). We 
    recommend using the official installer:
     - On Linux, MacOS or WSL:
         ```shell
-        $ curl -sSL https://install.python-poetry.org | python3 -
+        curl -sSL https://install.python-poetry.org | python3 -
         ```
-    - On Windows Powershell: 
-        ```shell
-        $ (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
-        ```
-      - You may need to add poetry to $PATH environment variable
+   - On Windows Powershell: 
+       ```shell
+      # Use "python" instead of "py" if the line below doesnt work 
+       (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
+     ```
+     - You may need to add poetry to $PATH environment variable
 
    
 2. Clone this repo:
    ```shell
-   $ git clone https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git
+   git clone https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git
    ```
 
 3. Navigate into the folder you just downloaded (`beneuro_experimental_data_organization`)

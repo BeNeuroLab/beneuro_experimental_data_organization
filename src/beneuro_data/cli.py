@@ -1,8 +1,7 @@
 import datetime
+import warnings
 from pathlib import Path
 from typing import List, Optional
-
-import warnings
 
 import typer
 from rich import print
@@ -238,7 +237,7 @@ def download_last(
             "--include-pyaldata/--ignore-pyaldata",
             help="Download PyalData files or not.",
         ),
-    ] = None
+    ] = None,
 ):
     """
     Download (raw) experimental data in the last session of a subject from the remote server.
@@ -277,7 +276,16 @@ def download_last(
     if include_pyaldata is None:
         include_pyaldata = typer.confirm("Include PyalData files?")
 
-    if all([not include_behavior, not include_ephys, not include_videos, not include_kilosort, not include_nwb, not include_pyaldata]):
+    if all(
+        [
+            not include_behavior,
+            not include_ephys,
+            not include_videos,
+            not include_kilosort,
+            not include_nwb,
+            not include_pyaldata,
+        ]
+    ):
         raise ValueError("At least one data type must be included.")
 
     download_raw_session(
@@ -292,7 +300,7 @@ def download_last(
         config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
         include_nwb=include_nwb,
         include_pyaldata=include_pyaldata,
-        include_kilosort=include_kilosort
+        include_kilosort=include_kilosort,
     )
 
     return True
@@ -365,12 +373,12 @@ def download_session(
             "--include-pyaldata/--ignore-pyaldata",
             help="Download PyalData files or not.",
         ),
-    ] = False
+    ] = False,
 ):
     warnings.warn(
         "download-session is deprecated. Use `bnd dl` or `bnd download-last` instead.",
         FutureWarning,
-        stacklevel=2
+        stacklevel=2,
     )
     """
     Download (raw) experimental data in a given session from the remote server.
@@ -460,7 +468,7 @@ def dl(
             "-p/-P",
             help="Download PyalData files (-p) or not (-P).",
         ),
-    ] = False
+    ] = False,
 ):
     """
     Download (raw) experimental data from a given session from the remote server.
@@ -472,7 +480,16 @@ def dl(
     if processing_level != "raw":
         raise NotImplementedError("Sorry, only raw data is supported for now.")
 
-    if all([not include_behavior, not include_ephys, not include_videos, not include_kilosort, not include_nwb, not include_pyaldata]):
+    if all(
+        [
+            not include_behavior,
+            not include_ephys,
+            not include_videos,
+            not include_kilosort,
+            not include_nwb,
+            not include_pyaldata,
+        ]
+    ):
         raise ValueError("At least one data type must be included.")
 
     config = _load_config()
@@ -489,7 +506,7 @@ def dl(
         allowed_extensions_not_in_root=config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
         include_nwb=include_nwb,
         include_pyaldata=include_pyaldata,
-        include_kilosort=include_kilosort
+        include_kilosort=include_kilosort,
     )
     print(f"Session {session_name} downloaded.")
 
@@ -628,7 +645,7 @@ def validate_session(
             "--check-kilosort-output/--ignore-kilosort-output",
             help="Check Kilosort output or not.",
         ),
-    ] = False
+    ] = False,
 ):
     """
     Validate experimental data in a given session.
@@ -640,7 +657,16 @@ def validate_session(
     if processing_level != "raw":
         raise NotImplementedError("Sorry, only raw data is supported for now.")
 
-    if all([not check_behavior, not check_ephys, not check_videos, not check_kilosort, not check_nwb, not check_pyaldata]):
+    if all(
+        [
+            not check_behavior,
+            not check_ephys,
+            not check_videos,
+            not check_kilosort,
+            not check_nwb,
+            not check_pyaldata,
+        ]
+    ):
         raise ValueError("At least one data type must be checked.")
 
     if not session_path.absolute().is_dir():
@@ -660,7 +686,7 @@ def validate_session(
         config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
         check_nwb=check_nwb,
         check_pyaldata=check_pyaldata,
-        check_kilosort=check_kilosort
+        check_kilosort=check_kilosort,
     )
 
 
@@ -713,7 +739,7 @@ def validate_last(
             "--check-kilosort-output/--ignore-kilosort-output",
             help="Check Kilosort output or not.",
         ),
-    ] = False
+    ] = False,
 ):
     """
     Validate experimental data in the last session of a subject.
@@ -724,7 +750,16 @@ def validate_last(
     if processing_level != "raw":
         raise NotImplementedError("Sorry, only raw data is supported for now.")
 
-    if all([not check_behavior, not check_ephys, not check_videos, not check_kilosort, not check_nwb, not check_pyaldata]):
+    if all(
+        [
+            not check_behavior,
+            not check_ephys,
+            not check_videos,
+            not check_kilosort,
+            not check_nwb,
+            not check_pyaldata,
+        ]
+    ):
         raise ValueError("At least one data type must be checked.")
 
     config = _load_config()
@@ -748,7 +783,7 @@ def validate_last(
         config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
         check_nwb=check_nwb,
         check_pyaldata=check_pyaldata,
-        check_kilosort=check_kilosort
+        check_kilosort=check_kilosort,
     )
 
 
@@ -907,12 +942,12 @@ def upload_session(
             "--include-kilosort-output/--ignore-kilosort-output",
             help="Upload Kilosort output or not.",
         ),
-    ] = False
+    ] = False,
 ):
     warnings.warn(
         "upload-session is deprecated. Use `bnd up` or `bnd upload-last` instead.",
         FutureWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
     """
@@ -1036,7 +1071,7 @@ def up(
             "-k/-K",
             help="Upload Kilosort output (-k) or not (-K).",
         ),
-    ] = False
+    ] = False,
 ):
     """
     Upload (raw) experimental data to the remote server.
@@ -1051,7 +1086,16 @@ def up(
     if processing_level != "raw":
         raise NotImplementedError("Sorry, only raw data is supported for now.")
 
-    if all([not include_behavior, not include_ephys, not include_videos, not include_nwb, not include_pyaldata, not include_kilosort]):
+    if all(
+        [
+            not include_behavior,
+            not include_ephys,
+            not include_videos,
+            not include_nwb,
+            not include_pyaldata,
+            not include_kilosort,
+        ]
+    ):
         raise ValueError("At least one data type must be included.")
 
     # if videos are included, rename them first if not specified otherwise
@@ -1081,7 +1125,7 @@ def up(
             rename_extra_files_first,
             include_nwb=include_nwb,
             include_pyaldata=include_pyaldata,
-            include_kilosort=include_kilosort
+            include_kilosort=include_kilosort,
         )
         message = f"Session {session_or_animal_name} uploaded."
     else:  # only animal name is given
@@ -1096,7 +1140,7 @@ def up(
             processing_level,
             include_nwb=include_nwb,
             include_pyaldata=include_pyaldata,
-            include_kilosort=include_kilosort
+            include_kilosort=include_kilosort,
         )
         message = f"Last session of {animal} uploaded."
     if up_done:
@@ -1177,7 +1221,7 @@ def upload_last(
             "-k/-K",
             help="Upload Kilosort output (-k) or not (-K).",
         ),
-    ] = None
+    ] = None,
 ):
     """
     Upload (raw) experimental data in the last session of a subject to the remote server.
@@ -1216,7 +1260,16 @@ def upload_last(
     if include_pyaldata is None:
         include_pyaldata = typer.confirm("Include PyalData files?")
 
-    if all([not include_behavior, not include_ephys, not include_videos, not include_kilosort, not include_nwb, not include_pyaldata]):
+    if all(
+        [
+            not include_behavior,
+            not include_ephys,
+            not include_videos,
+            not include_kilosort,
+            not include_nwb,
+            not include_pyaldata,
+        ]
+    ):
         raise ValueError("At least one data type must be included.")
 
     # if videos are included, rename them first if not specified otherwise
@@ -1243,7 +1296,7 @@ def upload_last(
         rename_extra_files_first,
         include_nwb=include_nwb,
         include_pyaldata=include_pyaldata,
-        include_kilosort=include_kilosort
+        include_kilosort=include_kilosort,
     )
 
     return True
@@ -1308,7 +1361,7 @@ def validate_sessions(
             "--check-kilosort-output/--ignore-kilosort-output",
             help="Check Kilosort output or not.",
         ),
-    ] = False
+    ] = False,
 ):
     """
     Validate (raw) experimental data in all sessions of a given subject.
@@ -1342,7 +1395,7 @@ def validate_sessions(
                     rename_extra_files_first,
                     check_nwb=check_nwb,
                     check_pyaldata=check_pyaldata,
-                    check_kilosort=check_kilosort
+                    check_kilosort=check_kilosort,
                 )
             except Exception as e:
                 print(f"[bold red]Problem with {session_path.name}: {e.args[0]}\n")
@@ -1414,7 +1467,7 @@ def validate_today(
             "--check-kilosort-output/--ignore-kilosort-output",
             help="Check Kilosort output or not.",
         ),
-    ] = False
+    ] = False,
 ):
     """
     Validate all sessions of all subjects that happened today.
@@ -1448,7 +1501,7 @@ def validate_today(
                     check_videos,
                     config.WHITELISTED_FILES_IN_ROOT,
                     config.EXTENSIONS_TO_RENAME_AND_UPLOAD,
-                    check_kilosort=check_kilosort
+                    check_kilosort=check_kilosort,
                 )
             except Exception as e:
                 print(f"[bold red]Problem with {session_path.name}: {e.args[0]}\n")
@@ -1473,7 +1526,6 @@ def _check_root(root_path: Path):
     files_in_root = [f.stem for f in root_path.iterdir()]
 
     assert "raw" in files_in_root, f"No raw folder in {root_path}"
-    assert "processed" in files_in_root, f"No processed folder in {root_path}"
 
 
 @app.command()
@@ -1493,6 +1545,12 @@ def check_config():
     print("[green]Config looks good.")
 
 
+def _check_is_git_track(repo_path):
+    folder = Path(repo_path)  # Convert to Path object
+    assert (folder / ".git").is_dir()
+    pass
+
+
 @app.command()
 def init():
     """
@@ -1509,6 +1567,8 @@ def init():
 
     else:
         print("\nConfig file doesn't exist. Let's create one.")
+        repo_path = Path(typer.prompt("Enter the absolute path to the repository"))
+        _check_is_git_track(repo_path)
 
         local_path = Path(
             typer.prompt("Enter the absolute path to the root of the local data storage")
@@ -1521,6 +1581,7 @@ def init():
         _check_root(remote_path)
 
         with open(env_path, "w") as f:
+            f.write(f"REPO_PATH = {repo_path}\n")
             f.write(f"LOCAL_PATH = {local_path}\n")
             f.write(f"REMOTE_PATH = {remote_path}\n")
 
@@ -1542,6 +1603,15 @@ def check_updates():
 
 @app.command()
 def self_update(
+    install_method: Annotated[
+        str,
+        typer.Option(
+            "-m",
+            "--method",
+            help="Specify the installation method: 'conda' (-c) or 'poetry' (-p).",
+            case_sensitive=False,
+        ),
+    ],
     verbose: Annotated[
         bool,
         typer.Option(help="Print new commits that were pulled."),
@@ -1550,7 +1620,7 @@ def self_update(
     """
     Update the bnd tool by pulling the latest commits from the repo's main branch.
     """
-    update_bnd(print_new_commits=verbose)
+    update_bnd(install_method=install_method, print_new_commits=verbose)
 
 
 if __name__ == "__main__":
