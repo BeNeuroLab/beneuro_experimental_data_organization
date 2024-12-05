@@ -1,7 +1,5 @@
 ![Tests](https://github.com/BeNeuroLab/beneuro_experimental_data_organization/actions/workflows/run_tests.yml/badge.svg)
 
-small check for update testing
-
 This is a collection of functions for managing the experimental data recorded in the 
 BeNeuro Lab, and a CLI tool called `bnd` for easy access to this functionality.
 
