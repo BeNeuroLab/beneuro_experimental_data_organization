@@ -56,10 +56,12 @@ def _get_new_commits(repo_path: Path) -> list[str]:
     repo_path = Path(repo_path)
 
     # Fetch the latest changes from the remote repository
-    _run_git_command(repo_path, ["fetch"])
+    _run_git_command(repo_path, ["fetch", "origin", "setup-new-install"])
 
     # Check if origin/main has new commits compared to the local branch
-    new_commits = _run_git_command(repo_path, ["log", "HEAD..origin/main", "--oneline"])
+    new_commits = _run_git_command(
+        repo_path, ["log", "HEAD..origin/setup-new-install", "--oneline"]
+    )
 
     # filter empty lines and strip whitespaces
     return [commit.strip() for commit in new_commits.split("\n") if commit.strip() != ""]
@@ -165,7 +167,7 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
         if install_method == "conda":
             # Update package
             subprocess.run(
-                ["pip", "insall", "--updagrade", f"git+{config.REPO_URL}", "--quiet"]
+                ["pip", "install", "--upgrade", f"git+{config.REPO_URL}", "--quiet"]
             )
 
         elif install_method == "poetry":
