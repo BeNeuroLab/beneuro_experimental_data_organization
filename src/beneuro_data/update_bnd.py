@@ -157,9 +157,9 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
 
     new_commits = _get_new_commits(config.REPO_PATH)
     if len(new_commits) > 0:
-        print("Package appears to be up to date, no new commits found.")
+        print("New commits found, pulling changes...")
 
-        print(2 * "\n")
+        print(1 * "\n")
 
         # pull changes from origin/main
         _run_git_command(config.REPO_PATH, ["pull", "origin", "main"])
@@ -173,7 +173,7 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
         elif install_method == "poetry":
             subprocess.run(["poetry", "install"], cwd=config.REPO_PATH)
 
-        print(3 * "\n")
+        print(1 * "\n")
         print("Package updated successfully.")
         print("\n")
 
