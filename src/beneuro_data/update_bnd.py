@@ -1,4 +1,5 @@
 import subprocess
+import warnings
 from pathlib import Path
 
 from rich import print
@@ -95,6 +96,13 @@ def update_bnd_poetry(print_new_commits: bool = False) -> None:
     print_new_commits : bool, optional, default: False
         If True, print the new commits that were applied.
     """
+
+    warnings.warn(
+        "upload-session is deprecated. Use `bnd up` or `bnd upload-last` instead.",
+        FutureWarning,
+        stacklevel=2,
+    )
+    """
     package_path = Path(__file__).absolute().parent.parent.parent
 
     new_commits = _get_new_commits(package_path)
@@ -125,34 +133,51 @@ def update_bnd_poetry(print_new_commits: bool = False) -> None:
                 print(f" - {commit}")
     else:
         print("Package appears to be up to date, no new commits found.")
+    """
 
 
-def update_bnd_conda(verbose: bool = False) -> None:
+def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
     """
     Update bnd if it was installed with conda
 
-
     Parameters
     ----------
-    verbose
+    install_method
+    print_new_commits
     """
+
+    if install_method not in ["conda", "poetry"]:
+        raise ValueError(
+            f"Argument {install_method} does not match expected options 'conda'"
+            f" or 'poetry'"
+        )
     config = _load_config()
 
     new_commits = _get_new_commits(config.REPO_PATH)
-
-    if len(new_commits) == 0:
+    if len(new_commits) > 0:
         print("Package appears to be up to date, no new commits found.")
-    else:
-        print("New commits found, pulling changes...")
 
-        # Update code
+        print(2 * "\n")
+
+        # pull changes from origin/main
         _run_git_command(config.REPO_PATH, ["pull", "origin", "main"])
 
-        verbose_flag = ""
-        if not verbose:
-            verbose_flag = "--quiet"
+        if install_method == "conda":
+            # Update package
+            subprocess.run(
+                ["pip", "insall", "--updagrade", f"git+{config.REPO_URL}", "--quiet"]
+            )
 
-        # Update package
-        subprocess.run(
-            ["pip", "insall", "--updagrade", f"git+{config.REPO_URL}", f"{verbose_flag}"]
-        )
+        elif install_method == "poetry":
+            subprocess.run(["poetry", "install"], cwd=config.REPO_PATH)
+
+        print(3 * "\n")
+        print("Package updated successfully.")
+        print("\n")
+
+        if print_new_commits:
+            print("New commits:")
+            for commit in new_commits:
+                print(f" - {commit}")
+    else:
+        print("Package appears to be up to date, no new commits found.")

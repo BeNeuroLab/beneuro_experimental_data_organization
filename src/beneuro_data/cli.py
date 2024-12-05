@@ -16,7 +16,7 @@ from beneuro_data.query_sessions import (
     list_all_sessions_on_day,
     list_subject_sessions_on_day,
 )
-from beneuro_data.update_bnd import check_for_updates, update_bnd_conda, update_bnd_poetry
+from beneuro_data.update_bnd import check_for_updates, update_bnd
 from beneuro_data.video_renaming import rename_raw_videos_of_session
 
 app = typer.Typer()
@@ -1620,17 +1620,7 @@ def self_update(
     """
     Update the bnd tool by pulling the latest commits from the repo's main branch.
     """
-    if install_method == "poetry":
-        update_bnd_poetry(print_new_commits=verbose)
-
-    elif install_method == "conda":
-        update_bnd_conda(verbose=verbose)
-
-    else:
-        raise ValueError(
-            f"Argument {install_method} does not match expected options 'conda'"
-            f" or 'poetry'"
-        )
+    update_bnd(install_method=install_method, print_new_commits=verbose)
 
 
 if __name__ == "__main__":

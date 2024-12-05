@@ -26,3 +26,9 @@ jobs:
       run: poetry install
     - name: Run pytest
       run: poetry run pytest --ignore=tests/conversion
+    - name: Create conda environment
+      run: conda env create -f environment.yml
+    - name: Activate environment
+      run: conda activate bnd
+    - name: Run pytest
+      run: pytest
