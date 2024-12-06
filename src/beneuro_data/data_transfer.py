@@ -1,3 +1,4 @@
+import glob
 import warnings
 from pathlib import Path
 
@@ -25,14 +26,11 @@ from beneuro_data.validate_argument import validate_argument
 from beneuro_data.video_renaming import rename_raw_videos_of_session
 
 
-def _get_session_name_from_session_path(local_session_path):
-    pass
-
-
-def _check_behaviour_doesnt_exist(local_session_path, remote_root, subject_name):
-    session_name = _get_session_name_from_session_path(local_session_path)
-    # if (remote_root / 'raw' / subject_name / session_name).is_dir():
-    #     if
+def _check_filetype_doesnt_exist(remote_session_path: Path, filetype: str):
+    if remote_session_path.is_dir():
+        files = glob.glob(f"{str(remote_session_path)}/{str}")
+        if len(files):
+            raise FileExistsError(f"{filetype} files already in remote")
 
 
 def upload_raw_session(
@@ -95,6 +93,9 @@ def upload_raw_session(
     -------
     Returns True if the upload was successful, raises an error otherwise.
     """
+    session_name = local_session_path.name
+    remote_session_path = remote_root / "raw" / subject_name / session_name
+
     # have to rename first so that validation passes
     if rename_videos_first:
         if not include_videos:
@@ -132,32 +133,45 @@ def upload_raw_session(
     )
 
     if include_behavior:
-        _check_behaviour_doesnt_exist(
-            remote_root,
-            subject_name,
-        )
-        upload_raw_behavioral_data(
-            local_session_path,
-            subject_name,
-            local_root,
-            remote_root,
-            whitelisted_files_in_root,
-        )
+        try:
+            _check_filetype_doesnt_exist(remote_session_path, filetype="*.txt")
+            _check_filetype_doesnt_exist(remote_session_path, filetype="*.pca")
+            upload_raw_behavioral_data(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+                whitelisted_files_in_root,
+            )
+        except Exception as e:
+            print(f"Skipping behavioural upload: {e}")
+
     if include_ephys:
-        upload_raw_ephys_data(
-            local_session_path,
-            subject_name,
-            local_root,
-            remote_root,
-            allowed_extensions_not_in_root,
-        )
+        try:
+            _check_filetype_doesnt_exist(remote_session_path, filetype="**/**/*.bin")
+            _check_filetype_doesnt_exist(remote_session_path, filetype="**/**/*.meta")
+            upload_raw_ephys_data(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+                allowed_extensions_not_in_root,
+            )
+        except Exception as e:
+            print(f"Skipping ephys upload: {e}")
+
     if include_videos:
-        upload_raw_videos(
-            local_session_path,
-            subject_name,
-            local_root,
-            remote_root,
-        )
+        try:
+            _check_filetype_doesnt_exist(remote_session_path, filetype="**/*.avi")
+            upload_raw_videos(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
+        except Exception as e:
+            print(f"Skipping videos upload: {e}")
+
     if include_extra_files:
         upload_extra_files(
             local_session_path,
@@ -168,25 +182,40 @@ def upload_raw_session(
             allowed_extensions_not_in_root,
         )
     if include_nwb:
-        upload_nwb_file(
-            local_session_path,
-            subject_name,
-            local_root,
-            remote_root,
-        )
+        try:
+            _check_filetype_doesnt_exist(remote_session_path, filetype="*.nwb")
+            upload_nwb_file(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
+        except Exception as e:
+            print(f"Skipping nwb upload: {e}")
+
     if include_pyaldata:
-        upload_pyaldata_file(
-            local_session_path,
-            subject_name,
-            local_root,
-            remote_root,
-        )
+        try:
+            _check_filetype_doesnt_exist(remote_session_path, filetype="*.mat")
+            upload_pyaldata_file(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
+        except Exception as e:
+            print(f"Skipping pyaldata upload: {e}")
+
     if include_kilosort:
-        upload_kilosort(
-            local_session_path,
-            local_root,
-            remote_root,
-        )
+        try:
+            _check_filetype_doesnt_exist(remote_session_path, filetype="**/**/**/**.tsv")
+            _check_filetype_doesnt_exist(remote_session_path, filetype="**/**/**/**.npy")
+            upload_kilosort(
+                local_session_path,
+                local_root,
+                remote_root,
+            )
+        except Exception as e:
+            print(f"Skipping kilosort upload: {e}")
 
     return True
 
