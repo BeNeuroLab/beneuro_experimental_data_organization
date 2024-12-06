@@ -71,7 +71,8 @@ def check_for_updates() -> bool:
 
     Returns True if new commits are found, False otherwise.
     """
-    package_path = Path(__file__).absolute().parent.parent.parent
+    config = _load_config()
+    package_path = config.REPO_PATH
 
     new_commits = _get_new_commits(package_path)
 

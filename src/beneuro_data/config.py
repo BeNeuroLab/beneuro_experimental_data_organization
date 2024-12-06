@@ -3,6 +3,20 @@ from pathlib import Path
 from pydantic.v1 import BaseSettings
 
 
+def _check_is_git_track(repo_path):
+    folder = Path(repo_path)  # Convert to Path object
+    assert (folder / ".git").is_dir()
+
+
+def _check_root(root_path: Path):
+    assert root_path.exists(), f"{root_path} does not exist."
+    assert root_path.is_dir(), f"{root_path} is not a directory."
+
+    files_in_root = [f.stem for f in root_path.iterdir()]
+
+    assert "raw" in files_in_root, f"No raw folder in {root_path}"
+
+
 def _get_package_path() -> Path:
     """
     Returns the path to the package directory.
