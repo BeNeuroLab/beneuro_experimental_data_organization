@@ -201,7 +201,7 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
         if install_method == "conda":
             if _remote_file_changed(
                 file_path=config.REPO_PATH / "environment.yml",
-                remote_branch="origin/test-environment-tracking",
+                remote_branch="origin/test-enviroment-tracking",
             ):
                 _run_git_command(
                     config.REPO_PATH, ["pull", "origin", "test-enviroment-tracking"]
