@@ -100,7 +100,7 @@ def update_bnd_poetry(print_new_commits: bool = False) -> None:
     """
 
     warnings.warn(
-        "upload-session is deprecated. Use `bnd up` or `bnd upload-last` instead.",
+        "update_bnd_poetry is deprecated. Use `bnd up` or `bnd upload-last` instead.",
         FutureWarning,
         stacklevel=2,
     )
