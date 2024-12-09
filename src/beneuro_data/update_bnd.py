@@ -60,7 +60,9 @@ def _get_new_commits(repo_path: Path) -> list[str]:
     _run_git_command(repo_path, ["fetch"])
 
     # Check if origin/main has new commits compared to the local branch
-    new_commits = _run_git_command(repo_path, ["log", "HEAD..origin/main", "--oneline"])
+    new_commits = _run_git_command(
+        repo_path, ["log", "HEAD..origin/test-environment-tracking", "--oneline"]
+    )
 
     # filter empty lines and strip whitespaces
     return [commit.strip() for commit in new_commits.split("\n") if commit.strip() != ""]
@@ -199,9 +201,11 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
         if install_method == "conda":
             if _remote_file_changed(
                 file_path=config.REPO_PATH / "environment.yml",
-                remote_branch="origin/main",
+                remote_branch="origin/test-environment-tracking",
             ):
-                _run_git_command(config.REPO_PATH, ["pull", "origin", "main"])
+                _run_git_command(
+                    config.REPO_PATH, ["pull", "origin", "test-environment-tracking"]
+                )
                 # Update the environment
                 if platform.system().lower() == "windows":
                     subprocess.run(
@@ -228,7 +232,9 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
                     )
 
         elif install_method == "poetry":
-            _run_git_command(config.REPO_PATH, ["pull", "origin", "main"])
+            _run_git_command(
+                config.REPO_PATH, ["pull", "origin", "test-environment-tracking"]
+            )
             subprocess.run(["poetry", "install"], cwd=config.REPO_PATH)
 
         print(1 * "\n")
