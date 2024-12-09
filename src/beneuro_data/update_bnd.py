@@ -180,8 +180,9 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
     ----------
     install_method
     print_new_commits
-    """
 
+    """
+    print("Update worked")
     if install_method not in ["conda", "poetry"]:
         raise ValueError(
             f"Argument {install_method} does not match expected options 'conda'"
