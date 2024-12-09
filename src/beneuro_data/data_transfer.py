@@ -51,6 +51,7 @@ def upload_raw_session(
     include_nwb: bool = False,
     include_pyaldata: bool = False,
     include_kilosort: bool = False,
+    _force: bool = False,
 ) -> bool:
     """
     Uploads a raw session to the remote server.
@@ -91,6 +92,8 @@ def upload_raw_session(
         Whether to include the PyALData output files in the upload.
     include_kilosort : bool
         Whether to include the kilosort output files in the upload.
+    _force : bool
+        Hidden variable for tests
     Returns
     -------
     Returns True if the upload was successful, raises an error otherwise.
@@ -135,7 +138,16 @@ def upload_raw_session(
     )
 
     if include_behavior:
-        if _filetype_not_present(
+        if _force:
+            upload_raw_behavioral_data(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+                whitelisted_files_in_root,
+            )
+
+        elif _filetype_not_present(
             remote_session_path, filetype="*.txt"
         ) and _filetype_not_present(remote_session_path, filetype="*.pca"):
             upload_raw_behavioral_data(
@@ -149,6 +161,14 @@ def upload_raw_session(
             print("Skipping behaviour upload; .txt or .pca files present")
 
     if include_ephys:
+        if _force:
+            upload_raw_ephys_data(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+                allowed_extensions_not_in_root,
+            )
         if _filetype_not_present(
             remote_session_path, filetype="**/**/*.bin"
         ) and _filetype_not_present(remote_session_path, filetype="**/**/*.meta"):
@@ -163,6 +183,13 @@ def upload_raw_session(
             print("Skipping ephys upload; .bin or .meta files present")
 
     if include_videos:
+        if _force:
+            upload_raw_videos(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
         if _filetype_not_present(remote_session_path, filetype="**/*.avi"):
             upload_raw_videos(
                 local_session_path,
@@ -183,6 +210,13 @@ def upload_raw_session(
             allowed_extensions_not_in_root,
         )
     if include_nwb:
+        if _force:
+            upload_nwb_file(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
         if _filetype_not_present(remote_session_path, filetype="*.nwb"):
             upload_nwb_file(
                 local_session_path,
@@ -194,6 +228,13 @@ def upload_raw_session(
             print("Skipping nwb upload; .nwb files present")
 
     if include_pyaldata:
+        if _force:
+            upload_pyaldata_file(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
         if _filetype_not_present(remote_session_path, filetype="*.nwb"):
             upload_pyaldata_file(
                 local_session_path,

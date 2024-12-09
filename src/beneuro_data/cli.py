@@ -1,4 +1,3 @@
-import warnings
 from pathlib import Path
 from typing import List, Optional
 
@@ -762,6 +761,8 @@ def self_update(
     update_bnd(install_method=install_method, print_new_commits=verbose)
 
 
+"""
+
 @app.command()
 def rename_videos(
     session_path: Annotated[
@@ -781,13 +782,6 @@ def rename_videos(
         typer.Option(help="Print the list of files that were renamed."),
     ] = False,
 ):
-    warnings.warn(
-        "load_anipose_from_h5() is deprecated and will be removed in a "
-        "future version. Please use load_anipose_from_csv() instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    """
     Rename the raw videos saved by Jarvis during a session to the convention we use.
 
     Example usage:
@@ -808,9 +802,9 @@ def rename_videos(
         subject_name,
         verbose,
     )
-    """
+"""
 
-
+"""
 @app.command()
 def validate_session(
     session_path: Annotated[
@@ -861,7 +855,6 @@ def validate_session(
         ),
     ] = False,
 ):
-    """
     Validate experimental data in a given session.
 
     E.g. to check all kinds of data in the current working directory which is supposedly a session of subject called M017:
@@ -904,7 +897,7 @@ def validate_session(
     )
     """
 
-
+"""
 @app.command()
 def validate_last(
     subject_name: Annotated[
@@ -956,7 +949,6 @@ def validate_last(
         ),
     ] = False,
 ):
-    """
     Validate experimental data in the last session of a subject.
 
     Example usage:
