@@ -199,7 +199,7 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
 
         # pull changes from origin/main
         _run_git_command(config.REPO_PATH, ["pull", "origin", "update-conda-env"])
-
+        breakpoint()
         if install_method == "conda":
             # Update the environment
             # TODO Update the environment if there have been changes in the dependencies
