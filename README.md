@@ -31,7 +31,7 @@ with conda
 3. Open either Miniconda prompt or Miniforge promt and run the following command. This 
    may take some time: 
    ```shell
-   conda env create --file environment.yml
+   conda env create --file=environment.yml
    ```
 2. Activate environments and check tests pass:
    ```shell

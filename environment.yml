@@ -1,24 +1,24 @@
-name: bnd
+name: bnd-test
 channels:
   - conda-forge
 dependencies:
-  - pip=24.3.1
-  - python=3.10.15
+  - pip
+  - python=3.10
+  - numpy
+  - pandas
+  - pydantic
+  - pynwb
+  - scipy
+  - pytest
+  - cuda-python
+  - rich
+  - typer
+  - python-dotenv
   - pip:
-      - git+https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git
-      - cuda-python==12.6.0
-      - docker==7.1.0
-      - ndx-pose==0.1.1
+      - -e ./
       - neuroconv==0.6.3
-      - numpy==1.26.4
-      - pandas==2.2.2
-      - probeinterface==0.2.24
-      - pydantic==2.9.2
-      - pynwb==2.8.2
-      - pytest==7.4.4
-      - rich==13.8.1
-      - ruamel-yaml==0.17.40
-      - scipy==1.14.1
-      - spikeinterface==0.101.0
-      - typer==0.9.4
-      - python-dotenv==1.0.1
+      - docker
+      - ndx-pose
+      - probeinterface
+      - spikeinterface
+      - ruamel-yaml

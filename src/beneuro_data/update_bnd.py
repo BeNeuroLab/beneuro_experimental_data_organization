@@ -59,7 +59,9 @@ def _get_new_commits(repo_path: Path) -> list[str]:
     _run_git_command(repo_path, ["fetch"])
 
     # Check if origin/main has new commits compared to the local branch
-    new_commits = _run_git_command(repo_path, ["log", "HEAD..origin/main", "--oneline"])
+    new_commits = _run_git_command(
+        repo_path, ["log", "HEAD..origin/update-conda-env", "--oneline"]
+    )
 
     # filter empty lines and strip whitespaces
     return [commit.strip() for commit in new_commits.split("\n") if commit.strip() != ""]
@@ -137,6 +139,39 @@ def update_bnd_poetry(print_new_commits: bool = False) -> None:
     """
 
 
+def get_file_hash(branch, file_path):
+    """Get the hash of a file from a specific Git branch."""
+    try:
+        result = subprocess.run(
+            ["git", "ls-tree", branch, file_path],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.split()[2] if result.stdout else None
+    except subprocess.CalledProcessError:
+        return None
+
+
+def _remote_file_changed(file_path: Path, remote_branch="origin/main") -> bool:
+    """Check if the file has changed remotely."""
+
+    # Get file hashes
+    local_hash = get_file_hash("HEAD", str(file_path))
+    remote_hash = get_file_hash(remote_branch, str(file_path))
+
+    if local_hash and remote_hash:
+        if local_hash != remote_hash:
+            print(f"{file_path} has changed remotely.")
+            return True
+        else:
+            print(f"No remote changes detected in {file_path}.")
+            return False
+    else:
+        print(f"Could not retrieve hash for {file_path}.")
+        return False
+
+
 def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
     """
     Update bnd if it was installed with conda
@@ -155,19 +190,31 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
     config = _load_config()
 
     new_commits = _get_new_commits(config.REPO_PATH)
+
     if len(new_commits) > 0:
         print("New commits found, pulling changes...")
 
         print(1 * "\n")
 
         # pull changes from origin/main
-        _run_git_command(config.REPO_PATH, ["pull", "origin", "main"])
+        _run_git_command(config.REPO_PATH, ["pull", "origin", "update-conda-env"])
 
         if install_method == "conda":
-            # Update package
-            subprocess.run(
-                ["pip", "install", "--upgrade", f"git+{config.REPO_URL}", "--quiet"]
-            )
+            # Update the environment
+            # TODO Update the environment if there have been changes in the dependencies
+            if _remote_file_changed(
+                file_path=config.REPO_PATH / "environment.yml",
+                remote_branch="origin/update-conda-env",
+            ):
+                subprocess.run(
+                    [
+                        "conda",
+                        "env",
+                        "update",
+                        f"--file={str(Path(config.REPO_PATH / 'environment.yml'))}",
+                        "prune",
+                    ]
+                )
 
         elif install_method == "poetry":
             subprocess.run(["poetry", "install"], cwd=config.REPO_PATH)
