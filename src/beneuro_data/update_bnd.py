@@ -1,3 +1,4 @@
+import platform
 import subprocess
 import warnings
 from pathlib import Path
@@ -153,7 +154,7 @@ def get_file_hash(branch, file_path):
         return None
 
 
-def _remote_file_changed(file_path: Path, remote_branch="origin/main") -> bool:
+def _remote_file_changed(file_path: Path, remote_branch) -> bool:
     """Check if the file has changed remotely."""
 
     # Get file hashes
@@ -162,13 +163,13 @@ def _remote_file_changed(file_path: Path, remote_branch="origin/main") -> bool:
 
     if local_hash and remote_hash:
         if local_hash != remote_hash:
-            print(f"{file_path} has changed remotely.")
+            print(f"File {file_path.name} has changed remotely.")
             return True
         else:
-            print(f"No remote changes detected in {file_path}.")
+            print(f"No remote changes detected in {file_path.name}.")
             return False
     else:
-        print(f"Could not retrieve hash for {file_path}.")
+        print(f"Could not retrieve hash for {file_path.name}.")
         return False
 
 
@@ -182,7 +183,6 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
     print_new_commits
 
     """
-    print("Update environment worked")
     if install_method not in ["conda", "poetry"]:
         raise ValueError(
             f"Argument {install_method} does not match expected options 'conda'"
@@ -197,27 +197,39 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
 
         print(1 * "\n")
 
-        # pull changes from origin/main
-        _run_git_command(config.REPO_PATH, ["pull", "origin", "update-conda-env"])
-        breakpoint()
         if install_method == "conda":
-            # Update the environment
-            # TODO Update the environment if there have been changes in the dependencies
             if _remote_file_changed(
                 file_path=config.REPO_PATH / "environment.yml",
                 remote_branch="origin/update-conda-env",
             ):
-                subprocess.run(
-                    [
-                        "conda",
-                        "env",
-                        "update",
-                        f"--file={str(Path(config.REPO_PATH / 'environment.yml'))}",
-                        "prune",
-                    ]
-                )
+                _run_git_command(config.REPO_PATH, ["pull", "origin", "update-conda-env"])
+                # Update the environment
+                if platform.system().lower() == "windows":
+                    subprocess.run(
+                        [
+                            "conda",
+                            "env",
+                            "update",
+                            "-f",
+                            f"{(config.REPO_PATH / 'environment.yml')}",
+                            "--prune",
+                        ],
+                        shell=True,
+                    )
+                else:
+                    subprocess.run(
+                        [
+                            "conda",
+                            "env",
+                            "update",
+                            "-f",
+                            f"{str(Path(config.REPO_PATH / 'environment.yml'))}",
+                            "prune",
+                        ]
+                    )
 
         elif install_method == "poetry":
+            _run_git_command(config.REPO_PATH, ["pull", "origin", "update-conda-env"])
             subprocess.run(["poetry", "install"], cwd=config.REPO_PATH)
 
         print(1 * "\n")
