@@ -14,7 +14,6 @@ dependencies:
   - rich
   - typer
   - python-dotenv
-  - seaborn
   - pip:
       - -e ./
       - neuroconv==0.6.3
