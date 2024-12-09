@@ -140,9 +140,10 @@ def update_bnd_poetry(print_new_commits: bool = False) -> None:
 
 def get_file_hash(branch, file_path):
     """Get the hash of a file from a specific Git branch."""
+    config = _load_config()
     try:
         result = subprocess.run(
-            ["git", "ls-tree", branch, file_path],
+            ["git", "-C", config.REPO_PATH, "ls-tree", branch, file_path],
             capture_output=True,
             text=True,
             check=True,
