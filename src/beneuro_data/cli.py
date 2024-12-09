@@ -376,7 +376,7 @@ def up(
             "-b/-B",
             help="Upload behavioral data (-b) or not (-B).",
         ),
-    ] = True,
+    ] = False,
     include_ephys: Annotated[
         bool,
         typer.Option(
@@ -393,30 +393,6 @@ def up(
             help="Upload video data (-v) or not (-V).",
         ),
     ] = False,
-    include_extra_files: Annotated[
-        bool,
-        typer.Option(
-            "--include-extra-files/--ignore-extra-files",
-            help="Upload extra files that are created by the experimenter or other software.",
-        ),
-    ] = True,
-    rename_videos_first: Annotated[
-        bool,
-        typer.Option(
-            "--rename/--no-rename",
-            help="Rename videos before validating and uploading.",
-        ),
-    ] = None,
-    rename_extra_files_first: Annotated[
-        bool,
-        typer.Option(
-            "--rename-extra/--no-rename-extra",
-            help="Rename extra files (e.g. comment.txt) before validating and uploading.",
-        ),
-    ] = True,
-    processing_level: Annotated[
-        str, typer.Argument(help="Processing level of the session must be raw.")
-    ] = "raw",
     include_nwb: Annotated[
         bool,
         typer.Option(
@@ -441,6 +417,27 @@ def up(
             help="Upload Kilosort output (-k) or not (-K).",
         ),
     ] = False,
+    include_extra_files: Annotated[
+        bool,
+        typer.Option(
+            "--include-extra-files/--ignore-extra-files",
+            help="Upload extra files that are created by the experimenter or other software.",
+        ),
+    ] = True,
+    rename_videos_first: Annotated[
+        bool,
+        typer.Option(
+            "--rename/--no-rename",
+            help="Rename videos before validating and uploading.",
+        ),
+    ] = None,
+    rename_extra_files_first: Annotated[
+        bool,
+        typer.Option(
+            "--rename-extra/--no-rename-extra",
+            help="Rename extra files (e.g. comment.txt) before validating and uploading.",
+        ),
+    ] = True,
 ):
     """
     Upload (raw) experimental data to the remote server.
@@ -450,10 +447,8 @@ def up(
     Example to upload the videos and ephys of the last session of a subject:
         `bnd up M017 -evB`
     """
-    animal = session_or_animal_name[:4]
-
-    if processing_level != "raw":
-        raise NotImplementedError("Sorry, only raw data is supported for now.")
+    config = _load_config()
+    animal = config.get_animal_name(session_or_animal_name)
 
     if all(
         [
@@ -480,7 +475,7 @@ def up(
 
     if len(session_or_animal_name) > 4:  # session name is given
         up_done = upload_raw_session(
-            config.LOCAL_PATH / processing_level / animal / session_or_animal_name,
+            config.LOCAL_PATH / "raw" / animal / session_or_animal_name,
             animal,
             config.LOCAL_PATH,
             config.REMOTE_PATH,
@@ -506,7 +501,6 @@ def up(
             include_extra_files,
             rename_videos_first,
             rename_extra_files_first,
-            processing_level,
             include_nwb=include_nwb,
             include_pyaldata=include_pyaldata,
             include_kilosort=include_kilosort,
@@ -598,12 +592,10 @@ def upload_last(
     Example usage:
         `bnd upload-last M017`
     """
-    if processing_level != "raw":
-        raise NotImplementedError("Sorry, only raw data is supported for now.")
 
     config = _load_config()
 
-    subject_path = config.LOCAL_PATH / processing_level / subject_name
+    subject_path = config.LOCAL_PATH / "raw" / subject_name
 
     # first get the last valid session
     # and ask the user if this is really the session they want to upload

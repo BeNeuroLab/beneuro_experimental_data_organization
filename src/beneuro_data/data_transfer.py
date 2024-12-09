@@ -28,9 +28,9 @@ from beneuro_data.video_renaming import rename_raw_videos_of_session
 
 def _check_filetype_doesnt_exist(remote_session_path: Path, filetype: str):
     if remote_session_path.is_dir():
-        files = glob.glob(f"{str(remote_session_path)}/{str}")
+        files = glob.glob(f"{str(remote_session_path)}/{filetype}")
         if len(files):
-            raise FileExistsError(f"{filetype} files already in remote")
+            raise FileExistsError(f"{Path(filetype).suffix} files already in remote")
 
 
 def upload_raw_session(
@@ -207,6 +207,7 @@ def upload_raw_session(
 
     if include_kilosort:
         try:
+            # TODO might have to change this when we change kilosort
             _check_filetype_doesnt_exist(remote_session_path, filetype="**/**/**/**.tsv")
             _check_filetype_doesnt_exist(remote_session_path, filetype="**/**/**/**.npy")
             upload_kilosort(
