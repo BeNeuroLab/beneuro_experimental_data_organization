@@ -1,3 +1,4 @@
+import glob
 import warnings
 from pathlib import Path
 
@@ -8,13 +9,13 @@ from beneuro_data.data_transfer_helpers import (
     _validate_session_is_raw_and_in_root,
 )
 from beneuro_data.data_validation import (
+    validate_kilosort,
+    validate_nwb_file,
+    validate_pyaldata_file,
     validate_raw_behavioral_data_of_session,
     validate_raw_ephys_data_of_session,
     validate_raw_session,
     validate_raw_videos_of_session,
-    validate_kilosort,
-    validate_nwb_file,
-    validate_pyaldata_file,
 )
 from beneuro_data.extra_file_handling import (
     _find_extra_files_with_extensions,
@@ -24,6 +25,14 @@ from beneuro_data.extra_file_handling import (
 from beneuro_data.validate_argument import validate_argument
 from beneuro_data.video_renaming import rename_raw_videos_of_session
 
+
+def _filetype_not_present(remote_session_path: Path, filetype: str) -> bool:
+    if remote_session_path.is_dir():
+        files = glob.glob(f"{str(remote_session_path)}/{filetype}")
+        if len(files):
+            return False
+        else:
+            return True
 
 
 def upload_raw_session(
@@ -42,6 +51,7 @@ def upload_raw_session(
     include_nwb: bool = False,
     include_pyaldata: bool = False,
     include_kilosort: bool = False,
+    _force: bool = False,
 ) -> bool:
     """
     Uploads a raw session to the remote server.
@@ -82,10 +92,15 @@ def upload_raw_session(
         Whether to include the PyALData output files in the upload.
     include_kilosort : bool
         Whether to include the kilosort output files in the upload.
+    _force : bool
+        Hidden variable for tests
     Returns
     -------
     Returns True if the upload was successful, raises an error otherwise.
     """
+    session_name = local_session_path.name
+    remote_session_path = remote_root / "raw" / subject_name / session_name
+
     # have to rename first so that validation passes
     if rename_videos_first:
         if not include_videos:
@@ -107,42 +122,84 @@ def upload_raw_session(
 
     # TODO maybe check separately to have the option to upload things that are valid
     # check everything we want to upload
-    behavior_files, ephys_files, video_files, nwb_files, pyaldata_files, kilosort_files = validate_raw_session(
-        local_session_path,
-        subject_name,
-        include_behavior,
-        include_ephys,
-        include_videos,
-        whitelisted_files_in_root,
-        allowed_extensions_not_in_root,
-        include_nwb=include_nwb,
-        include_pyaldata=include_pyaldata,
-        include_kilosort=include_kilosort
+    behavior_files, ephys_files, video_files, nwb_files, pyaldata_files, kilosort_files = (
+        validate_raw_session(
+            local_session_path,
+            subject_name,
+            include_behavior,
+            include_ephys,
+            include_videos,
+            whitelisted_files_in_root,
+            allowed_extensions_not_in_root,
+            include_nwb=include_nwb,
+            include_pyaldata=include_pyaldata,
+            include_kilosort=include_kilosort,
+        )
     )
 
     if include_behavior:
-        upload_raw_behavioral_data(
-            local_session_path,
-            subject_name,
-            local_root,
-            remote_root,
-            whitelisted_files_in_root,
-        )
+        if _force:
+            upload_raw_behavioral_data(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+                whitelisted_files_in_root,
+            )
+
+        elif _filetype_not_present(
+            remote_session_path, filetype="*.txt"
+        ) and _filetype_not_present(remote_session_path, filetype="*.pca"):
+            upload_raw_behavioral_data(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+                whitelisted_files_in_root,
+            )
+        else:
+            print("Skipping behaviour upload; .txt or .pca files present")
+
     if include_ephys:
-        upload_raw_ephys_data(
-            local_session_path,
-            subject_name,
-            local_root,
-            remote_root,
-            allowed_extensions_not_in_root,
-        )
+        if _force:
+            upload_raw_ephys_data(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+                allowed_extensions_not_in_root,
+            )
+        if _filetype_not_present(
+            remote_session_path, filetype="**/**/*.bin"
+        ) and _filetype_not_present(remote_session_path, filetype="**/**/*.meta"):
+            upload_raw_ephys_data(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+                allowed_extensions_not_in_root,
+            )
+        else:
+            print("Skipping ephys upload; .bin or .meta files present")
+
     if include_videos:
-        upload_raw_videos(
-            local_session_path,
-            subject_name,
-            local_root,
-            remote_root,
-        )
+        if _force:
+            upload_raw_videos(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
+        if _filetype_not_present(remote_session_path, filetype="**/*.avi"):
+            upload_raw_videos(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
+        else:
+            print("Skipping video upload; .avi files present")
+
     if include_extra_files:
         upload_extra_files(
             local_session_path,
@@ -153,25 +210,53 @@ def upload_raw_session(
             allowed_extensions_not_in_root,
         )
     if include_nwb:
-        upload_nwb_file(
-            local_session_path,
-            subject_name,
-            local_root,
-            remote_root,
-        )
+        if _force:
+            upload_nwb_file(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
+        if _filetype_not_present(remote_session_path, filetype="*.nwb"):
+            upload_nwb_file(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
+        else:
+            print("Skipping nwb upload; .nwb files present")
+
     if include_pyaldata:
-        upload_pyaldata_file(
-            local_session_path,
-            subject_name,
-            local_root,
-            remote_root,
-        )
+        if _force:
+            upload_pyaldata_file(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
+        if _filetype_not_present(remote_session_path, filetype="*.nwb"):
+            upload_pyaldata_file(
+                local_session_path,
+                subject_name,
+                local_root,
+                remote_root,
+            )
+        else:
+            print("Skipping pyaldata upload; .mat files present")
+
     if include_kilosort:
-        upload_kilosort(
-            local_session_path,
-            local_root,
-            remote_root,
-        )
+        if _filetype_not_present(
+            remote_session_path, filetype="**/**/**/**.tsv"
+        ) and _filetype_not_present(remote_session_path, filetype="**/**/**/**.npy"):
+            # TODO might have to change this when we change kilosort
+            upload_kilosort(
+                local_session_path,
+                local_root,
+                remote_root,
+            )
+        else:
+            print("Skipping pyaldata upload; .mat files present")
 
     return True
 
@@ -413,6 +498,7 @@ def upload_extra_files(
 
     return remote_file_paths
 
+
 def upload_kilosort(
     local_session_path: Path,
     local_root: Path,
@@ -421,8 +507,11 @@ def upload_kilosort(
     # Implement logic to upload Kilosort output
     kilosort_files = validate_kilosort(local_session_path)
     remote_kilosort_files = _source_to_dest(kilosort_files, local_root, remote_root)
-    _copy_list_of_files(kilosort_files, remote_kilosort_files, if_exists="error_if_different")
+    _copy_list_of_files(
+        kilosort_files, remote_kilosort_files, if_exists="error_if_different"
+    )
     return True
+
 
 def upload_nwb_file(
     local_session_path: Path,
@@ -439,6 +528,7 @@ def upload_nwb_file(
     _copy_list_of_files(nwb_files, remote_nwb_files, if_exists="error_if_different")
     return True
 
+
 def upload_pyaldata_file(
     local_session_path: Path,
     subject_name: str,
@@ -448,7 +538,9 @@ def upload_pyaldata_file(
     # Implement logic to upload PyalData files
     pyaldata_files = validate_pyaldata_file(local_session_path)
     remote_pyaldata_files = _source_to_dest(pyaldata_files, local_root, remote_root)
-    _copy_list_of_files(pyaldata_files, remote_pyaldata_files, if_exists="error_if_different")
+    _copy_list_of_files(
+        pyaldata_files, remote_pyaldata_files, if_exists="error_if_different"
+    )
     return True
 
 
@@ -565,7 +657,6 @@ def download_raw_session(
             warnings.warn(f"Skipping PyalData file because of: {type(e).__name__}: {e}")
             include_pyaldata = False
 
-
     # always try to include extra files
     try:
         remote_extra_files, local_extra_files = _prepare_copying_raw_extra_files(
@@ -625,7 +716,6 @@ def download_raw_session(
     if include_pyaldata:
         _copy_list_of_files(remote_pyaldata_files, local_pyaldata_files, if_exists)
 
-
     local_session_path = _source_to_dest(
         remote_session_path, remote_base_path, local_base_path
     )
@@ -640,7 +730,7 @@ def download_raw_session(
         allowed_extensions_not_in_root,
         include_nwb=include_nwb,
         include_pyaldata=include_pyaldata,
-        include_kilosort=include_kilosort
+        include_kilosort=include_kilosort,
     )
 
     return local_session_path
@@ -802,9 +892,12 @@ def _prepare_copying_kilosort(
         Lists of source and destination paths for the Kilosort output files.
     """
     source_kilosort_files = validate_kilosort(source_session_path)
-    dest_kilosort_files = _source_to_dest(source_kilosort_files, source_base_path, dest_base_path)
+    dest_kilosort_files = _source_to_dest(
+        source_kilosort_files, source_base_path, dest_base_path
+    )
     _check_list_of_files_before_copy(source_kilosort_files, dest_kilosort_files, if_exists)
     return source_kilosort_files, dest_kilosort_files
+
 
 # prepare copy nwb file
 def _prepare_copying_nwb_file(
@@ -837,6 +930,7 @@ def _prepare_copying_nwb_file(
     _check_list_of_files_before_copy(source_nwb_files, dest_nwb_files, if_exists)
     return source_nwb_files, dest_nwb_files
 
+
 # prepare copy pyaldata file
 def _prepare_copying_pyaldata_file(
     source_session_path: Path,
@@ -864,7 +958,9 @@ def _prepare_copying_pyaldata_file(
         Lists of source and destination paths for the PyalData file.
     """
     source_pyaldata_files = validate_pyaldata_file(source_session_path)
-    dest_pyaldata_files = _source_to_dest(source_pyaldata_files, source_base_path, dest_base_path)
+    dest_pyaldata_files = _source_to_dest(
+        source_pyaldata_files, source_base_path, dest_base_path
+    )
     _check_list_of_files_before_copy(source_pyaldata_files, dest_pyaldata_files, if_exists)
     return source_pyaldata_files, dest_pyaldata_files
 

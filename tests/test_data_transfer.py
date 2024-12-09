@@ -374,7 +374,7 @@ raw_session_upload_test_cases_without_renaming_first = [
         rename_videos_first=False,
         rename_extra_files_first=False,
         include_pyaldata=True,
-    )
+    ),
 ]
 
 raw_session_upload_test_cases_with_renaming_first = [
@@ -560,7 +560,8 @@ def test_upload_raw_session(tmp_path, test_case: RawSessionUploadTestCase):
             test_case.rename_extra_files_first,
             include_nwb=test_case.include_nwb,
             include_pyaldata=test_case.include_pyaldata,
-            include_kilosort=test_case.include_kilosort
+            include_kilosort=test_case.include_kilosort,
+            _force=True,
         )
 
         import filecmp
@@ -587,5 +588,6 @@ def test_upload_raw_session(tmp_path, test_case: RawSessionUploadTestCase):
                 test_case.rename_extra_files_first,
                 include_nwb=test_case.include_nwb,
                 include_pyaldata=test_case.include_pyaldata,
-                include_kilosort=test_case.include_kilosort
+                include_kilosort=test_case.include_kilosort,
+                _force=True,
             )

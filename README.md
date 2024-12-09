@@ -9,15 +9,13 @@ The intended pipeline of use of `bnd` is as follows:
 After you recorded an experimental session in the lab PCs:
 ```shell
 # From the lab PC
-$ bnd up MXX  # Uploads latest session of animal MXX to RDS
+$ bnd up MXX -b -e -v  # Uploads latest behaviour ephys and videos session of animal MXX to RDS
 ```
 On your local PC:
 ```shell
-$ bnd dl MXX  # Download latest session of animal MXX from RDS to local PC
-$ bnd kilosort-session MXX_2024_01_01_09_00  # Kilosorts session and saves in local processed
-$ bnd to-nwb MXX_2024_01_01_09_00  # Converts data to .nwb format
-$ bnd nwb-to-pyaldata MXX_2024_01_01_09_00  # Convert session into pyaldata format
-$ bnd up MXX_2024_01_01_09_00  # Still pending. Uploads nwb and pyaldata to rds processed
+$ bnd dl MXX_2024_01_01_09_00  # Download latest session of animal MXX from RDS to local PC
+$ bnd to-pyal MXX_2024_01_01_09_00  # Convert session into pyaldata format. Kilosorts and converts to nwb before
+$ bnd up MXX_2024_01_01_09_00 -n -p  # Still pending. Uploads nwb and pyaldata to rds
 ```
 # Setting up
 ## Installation (user)

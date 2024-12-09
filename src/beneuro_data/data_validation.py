@@ -31,6 +31,7 @@ def validate_raw_session(
 
     Parameters
     ----------
+
     session_path : Path
         Path to the session.
     subject_name : str
@@ -47,6 +48,8 @@ def validate_raw_session(
         A tuple of file extensions that are allowed in the session directory excluding the root level.
         E.g. (".txt", )
         For what's allowed in the root, use `whitelisted_files_in_root`.
+    include_pyaldata : bool
+    include_nwb : bool
     include_kilosort : bool, default: False
         Whether to upload the Kilosort output.
 
@@ -80,7 +83,14 @@ def validate_raw_session(
     if include_pyaldata:
         pyaldata_files = validate_pyaldata_file(session_path)
 
-    return behavior_files, ephys_files, video_files, nwb_files, pyaldata_files, kilosort_files
+    return (
+        behavior_files,
+        ephys_files,
+        video_files,
+        nwb_files,
+        pyaldata_files,
+        kilosort_files,
+    )
 
 
 def validate_date_format(extracted_date_str: str) -> bool:
@@ -553,18 +563,19 @@ def validate_kilosort(session_path: Path) -> list[Path]:
         raise FileNotFoundError("No Kilosort output found.")
     return kilosort_files
 
+
 def validate_nwb_file(session_path: Path) -> list[Path]:
     expected_nwb_filename = f"{session_path.name}.nwb"
     nwb_file = session_path / expected_nwb_filename
     if not nwb_file.exists():
-        raise FileNotFoundError(f"No NWB file found.")
+        raise FileNotFoundError("No NWB file found.")
     return [nwb_file]
+
 
 def validate_pyaldata_file(session_path: Path) -> list[Path]:
     expected_pyaldata_filename = f"{session_path.name}_pyaldata.mat"
     pyaldata_file = session_path / expected_pyaldata_filename
     if not pyaldata_file.exists():
-        raise FileNotFoundError(f"No PyalData file found.")
+        raise FileNotFoundError("No PyalData file found.")
     # Additional validation can be added here
     return [pyaldata_file]
-
