@@ -37,8 +37,8 @@ def to_pyal(
     ] = False,
     verbose: Annotated[
         bool,
-        typer.Option("--verbose/--no-verbose", help="Verbosity on pyaldata conversion"),
-    ] = False,
+        typer.Option("-v/-V", help="Verbosity on pyaldata conversion"),
+    ] = True,
 ):
     """
     Convert session data into a pyaldata dataframe and saves it as a .mat
@@ -90,9 +90,16 @@ def to_pyal(
                 if len(nwbfiles) > 1:
                     raise FileNotFoundError("Too many nwb files in session folder!")
                 elif not nwbfiles:
-                    raise FileNotFoundError("No .nwb file found in session folder!")
+                    if verbose:
+                        print("No nwb file found, creating one")
+                    to_nwb(
+                        session_name=session_name,
+                        run_kilosort=run_kilosort,
+                        run_anipose=run_anipose,
+                        verbose=verbose,
+                    )
 
-    nwbfile_path = nwbfiles[0].absolute()
+    nwbfile_path = list(local_session_path.glob("*.nwb"))[0].absolute()
 
     # Run conversion
     convert_nwb_to_pyaldata(nwbfile_path, verbose)
@@ -106,14 +113,12 @@ def to_nwb(
     ],
     run_kilosort: Annotated[
         bool,
-        typer.Option("--kilosort/--no-kilosort", help="Run Kilosort 4 or not"),
+        typer.Option("-k/-K", help="Run Kilosort 4 or not"),
     ] = False,
-    sort_probe: Annotated[
-        Optional[List[str]],
-        typer.Option(
-            help="Probes to run Kilosort on. If not given, all probes are processed."
-        ),
-    ] = None,
+    run_anipose: Annotated[
+        bool,
+        typer.Option("-a/-A", help="Run Anipose or not"),
+    ] = False,
     clean_up_temp_files: Annotated[
         bool,
         typer.Option(
@@ -121,6 +126,12 @@ def to_nwb(
             help="Keep the binary files created by Kilosort or not. They are huge, but needed for running Phy later.",
         ),
     ] = True,
+    sort_probe: Annotated[
+        Optional[List[str]],
+        typer.Option(
+            help="Probes to run Kilosort on. If not given, all probes are processed."
+        ),
+    ] = None,
     verbose_kilosort: Annotated[
         bool,
         typer.Option(help="Run Kilosort in verbose mode."),
