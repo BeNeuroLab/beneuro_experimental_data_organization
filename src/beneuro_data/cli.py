@@ -27,18 +27,23 @@ def to_pyal(
         str,
         typer.Argument(help="Session name to convert"),
     ],
+    run_kilosort: Annotated[
+        bool,
+        typer.Option("-k/-K", help="Run Kilosort 4 or not"),
+    ] = False,
+    run_anipose: Annotated[
+        bool,
+        typer.Option("-a/-A", help="Run Anipose or not"),
+    ] = False,
     verbose: Annotated[
         bool,
         typer.Option("--verbose/--no-verbose", help="Verbosity on pyaldata conversion"),
     ] = False,
 ):
     """
-    Convert .nwb file into a pyaldata dataframe and saves it as a .mat
+    Convert session data into a pyaldata dataframe and saves it as a .mat
 
-    Note that you will need some extra dependencies that are not installed by default.
-
-    You can install them by running `poetry install --with processing` in bnd's root folder (which you can with with `bnd show-config`).
-
+    You can optionally include ephys and pose estimation but behaviour is a must.
 
 
     \b
@@ -65,11 +70,27 @@ def to_pyal(
     if not local_session_path.absolute().is_relative_to(config.LOCAL_PATH):
         raise ValueError("Session path must be inside the local root folder.")
 
-    nwbfiles = list(local_session_path.glob("*.nwb"))
-    if len(nwbfiles) > 1:
-        raise FileNotFoundError("Too many nwb files in session folder!")
-    elif not nwbfiles:
-        raise FileNotFoundError("No .nwb file found in session folder!")
+    # Check if there already a pyaldaya file
+    if (local_session_path / f"{session_name}_pyaldata.mat").exists():
+        while True:
+            user_input = (
+                input(
+                    f"File '{(local_session_path / f"{session_name}_pyaldata.mat").name}' already exists. Do you want to overwrite it? (y/n): "
+                )
+                .lower()
+                .strip()
+            )
+            if user_input == "n":
+                print(
+                    f"File '{(local_session_path / f"{session_name}_pyaldata.mat").name}' was not overwritten."
+                )
+                return
+            elif user_input == "y":
+                nwbfiles = list(local_session_path.glob("*.nwb"))
+                if len(nwbfiles) > 1:
+                    raise FileNotFoundError("Too many nwb files in session folder!")
+                elif not nwbfiles:
+                    raise FileNotFoundError("No .nwb file found in session folder!")
 
     nwbfile_path = nwbfiles[0].absolute()
 
