@@ -317,10 +317,10 @@ class ParsedNWBFile:
             if self.nwbfile.subject is not None:
                 self.subject_id = self.nwbfile.subject.subject_id
                 return
-
-        warnings.warn(
-            f"NWBFile {self.nwbfile_path.name} does not have subject information. Using animal name from session path"
-        )
+        if self.verbose:
+            print(
+                f"NWBFile {self.nwbfile_path.name} does not have subject information. Using animal name from session path"
+            )
         self.subject_id = self.nwbfile_path.name[:4]
         return
 
@@ -475,7 +475,8 @@ class ParsedNWBFile:
 
         """
         if "Pose estimation" not in self.behavior.keys():
-            warnings.warn("No anipose data available")
+            if self.verbose:
+                print("No anipose data available")
             return
 
         if self.verbose:
@@ -763,31 +764,10 @@ class ParsedNWBFile:
         path_to_save = (
             self.nwbfile_path.parent / f"{self.nwbfile_path.parent.name}_pyaldata.mat"
         )
-        if path_to_save.exists():
-            # Prompt the user with an interactive menu
-            while True:
-                user_input = (
-                    input(
-                        f"File '{path_to_save}' already exists. Do you want to overwrite it? (y/n): "
-                    )
-                    .lower()
-                    .strip()
-                )
-                if user_input == "y":
-                    print("Saving file...")
-                    data_array = self.pyaldata_df.to_records(index=False)
-                    scipy.io.savemat(path_to_save, {"pyaldata": data_array})
-                    print(f"File '{path_to_save}' has been overwritten.")
-                    break
-                elif user_input == "n":
-                    print(f"File '{path_to_save}' was not overwritten.")
-                    break
-                else:
-                    print("Please enter 'y' for yes or 'n' for no.")
-        else:
-            print("Saving file...")
-            data_array = self.pyaldata_df.to_records(index=False)
-            scipy.io.savemat(path_to_save, {"pyaldata": data_array})
+
+        data_array = self.pyaldata_df.to_records(index=False)
+        scipy.io.savemat(path_to_save, {"pyaldata": data_array})
+        if self.verbose:
             print(f"Saved pyaldata file in {path_to_save}")
         return
 

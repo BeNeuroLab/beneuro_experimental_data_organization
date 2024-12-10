@@ -57,7 +57,6 @@ def to_pyal(
 
     """
     # TODO: Make custom channel map option in case we dont agree with pinpoint
-
     from beneuro_data.conversion.convert_nwb_to_pyaldata import convert_nwb_to_pyaldata
 
     config = _load_config()
@@ -80,6 +79,7 @@ def to_pyal(
                 .lower()
                 .strip()
             )
+            # breakpoint()
             if user_input == "n":
                 print(
                     f"File '{(local_session_path / f"{session_name}_pyaldata.mat").name}' was not overwritten."
@@ -99,10 +99,12 @@ def to_pyal(
                         verbose=verbose,
                     )
 
-    nwbfile_path = list(local_session_path.glob("*.nwb"))[0].absolute()
+            nwbfile_path = list(local_session_path.glob("*.nwb"))[0].absolute()
 
-    # Run conversion
-    convert_nwb_to_pyaldata(nwbfile_path, verbose)
+            # Run conversion
+            convert_nwb_to_pyaldata(nwbfile_path, verbose)
+
+            return
 
 
 @app.command()
@@ -132,7 +134,7 @@ def to_nwb(
             help="Probes to run Kilosort on. If not given, all probes are processed."
         ),
     ] = None,
-    verbose_kilosort: Annotated[
+    verbose: Annotated[
         bool,
         typer.Option(help="Run Kilosort in verbose mode."),
     ] = True,
@@ -184,7 +186,7 @@ def to_nwb(
     if not local_session_path.absolute().is_relative_to(config.LOCAL_PATH):
         raise ValueError("Session path must be inside the local root folder.")
 
-    if len(sort_probe) != 0:
+    if sort_probe is not None:
         if len(set(sort_probe)) != len(sort_probe):
             raise ValueError(f"Duplicate probe names found in {sort_probe}.")
         # append .ap to each probe name
@@ -207,7 +209,7 @@ def to_nwb(
         run_kilosort,
         stream_names_to_process,
         clean_up_temp_files,
-        verbose_kilosort,
+        verbose,
     )
 
 
