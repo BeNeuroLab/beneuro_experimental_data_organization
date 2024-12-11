@@ -212,6 +212,7 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
                             "-f",
                             f"{(config.REPO_PATH / 'environment.yml')}",
                             "--prune",
+                            "--quiet",
                         ],
                         shell=True,
                     )
@@ -223,7 +224,8 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
                             "update",
                             "-f",
                             f"{str(Path(config.REPO_PATH / 'environment.yml'))}",
-                            "prune",
+                            "--prune",
+                            "--quiet",
                         ]
                     )
             else:
