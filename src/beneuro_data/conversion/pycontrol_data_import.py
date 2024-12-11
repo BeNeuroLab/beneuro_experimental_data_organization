@@ -8,6 +8,10 @@ from datetime import datetime
 
 import numpy as np
 
+from beneuro_data import set_logging
+
+logger = set_logging(__name__)
+
 Event = namedtuple("Event", ["time", "name"])
 State = namedtuple("State", ["time", "name", "duration"])
 Print = namedtuple("Print", ["time", "name", "value"])
@@ -66,7 +70,7 @@ class Session:
 
         with open(file_path, "r") as f:
             if self.verbose:
-                print("Importing data file: " + os.path.split(file_path)[1])
+                logger.info("Importing data file: " + os.path.split(file_path)[1])
             all_lines = [line.strip() for line in f.readlines() if line.strip()]
 
         # Extract and store session information.
@@ -177,7 +181,7 @@ class Session:
             self.CPI = [item.value for item in self.print_data if item.name == "CPI"][0]
         except:
             if self.verbose:
-                print("CPI not defined!")
+                logger.info("CPI not defined!")
 
     def get_led_directions(self):
         """Return list of led positions in the order they were presented."""

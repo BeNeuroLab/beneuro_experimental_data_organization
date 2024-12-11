@@ -12,6 +12,10 @@ from pynwb import NWBHDF5IO
 from pynwb.behavior import SpatialSeries
 from pynwb.misc import Units
 
+from beneuro_data import set_logging
+
+logger = set_logging(__name__)
+
 
 def _bin_spikes(probe_units: Units, bin_size: float) -> np.array:
     """
@@ -52,33 +56,6 @@ def _bin_spikes(probe_units: Units, bin_size: float) -> np.array:
         np.add.at(binned_spikes, (neuron_id, bin_indices), 1)
 
     return binned_spikes
-
-
-def _add_unit_counter_to_unit_guide(unit_guide):
-    warnings.warn(
-        "_add_unit_counter_to_unit_guide() is deprecated. Unit guides are now called chan_best"
-        " and do not have a second column"
-    )
-    return
-
-    # # Initialize the counter and new_unit_guide
-    # counter = 1
-    # new_unit_guide = []
-    #
-    # # Iterate through the array
-    # for i in range(len(unit_guide)):
-    #     if i > 0 and unit_guide[i] == unit_guide[i - 1]:
-    #         # Increment counter if the current value is the same as the previous one
-    #         counter += 1
-    #     else:
-    #         # Reset the counter if the value changes
-    #         counter = 1
-    #
-    #     new_unit_guide.append([unit_guide[i], counter])
-    #
-    # # Convert the new array to a NumPy array
-    # new_unit_guide = np.array(new_unit_guide)
-    # return new_unit_guide
 
 
 def _parse_pynwb_probe(
@@ -306,6 +283,8 @@ class ParsedNWBFile:
             # Initialize Pyaldata dataframe
             self.pyaldata_df = None
 
+        logger.info("Parsed NWB file")
+
     def try_to_include_subject_info(self) -> None:
         """
         Try to add subject information to instance
@@ -381,8 +360,6 @@ class ParsedNWBFile:
         -------
 
         """
-        if self.verbose:
-            print("Parsing pycontrol states")
 
         data_dict = {
             col: self.behavior["behavioral_states"][col].data[:]
@@ -401,8 +378,6 @@ class ParsedNWBFile:
         -------
 
         """
-        if self.verbose:
-            print("Parsing pycontrol events")
 
         behav_events_time_series = self.behavior["behavioral_events"].time_series[
             "behavioral events"
@@ -458,8 +433,6 @@ class ParsedNWBFile:
             self.pycontrol_motion_sensors = np.nan
             return
 
-        if self.verbose:
-            print("Parsing motion sensors")
         ball_position_spatial_series = self.behavior["Position"].spatial_series[
             "Ball position"
         ]
@@ -478,8 +451,6 @@ class ParsedNWBFile:
             warnings.warn("No anipose data available")
             return
 
-        if self.verbose:
-            print("Parsing anipose data")
         anipose_data_dict = self.behavior["Pose estimation"].pose_estimation_series
 
         parsed_anipose_data_dict = {}
@@ -500,8 +471,8 @@ class ParsedNWBFile:
         -------
 
         """
-        if self.verbose:
-            print(f"Parsing spiking data. Found probes {list(self.ecephys.keys())}")
+
+        logger.info(f"Parsing spiking data. Found probes {list(self.ecephys.keys())}")
         spike_data_dict = {}
 
         for probe_units in self.ecephys.keys():
@@ -721,8 +692,6 @@ class ParsedNWBFile:
         -------
 
         """
-        if self.verbose:
-            print("Converting parsed nwb data into pyaldata format")
 
         # Define all the necessary columns
         columns = [
@@ -757,6 +726,8 @@ class ParsedNWBFile:
         # Expand dimensions
         self.expand_dim_in_single_bin_trials()
 
+        logger.info("Session converted to pyaldata format")
+
         return
 
     def save_to_mat(self):
@@ -774,21 +745,21 @@ class ParsedNWBFile:
                     .strip()
                 )
                 if user_input == "y":
-                    print("Saving file...")
+                    logger.info("Saving file...")
                     data_array = self.pyaldata_df.to_records(index=False)
                     scipy.io.savemat(path_to_save, {"pyaldata": data_array})
-                    print(f"File '{path_to_save}' has been overwritten.")
+                    logger.info(f"File '{path_to_save.name}' has been overwritten.")
                     break
                 elif user_input == "n":
-                    print(f"File '{path_to_save}' was not overwritten.")
+                    logger.info(f"File '{path_to_save.name}' was not overwritten.")
                     break
                 else:
-                    print("Please enter 'y' for yes or 'n' for no.")
+                    logger.info("Please enter 'y' for yes or 'n' for no.")
         else:
-            print("Saving file...")
+            logger.info("Saving file...")
             data_array = self.pyaldata_df.to_records(index=False)
             scipy.io.savemat(path_to_save, {"pyaldata": data_array})
-            print(f"Saved pyaldata file in {path_to_save}")
+            logger.info(f"Saved pyaldata file in {path_to_save.name}")
         return
 
 

@@ -2,6 +2,7 @@ import warnings
 from pathlib import Path
 from typing import Optional
 
+from beneuro_data import set_logging
 from beneuro_data.conversion.animal_profile_interface import AnimalProfileInterface
 from beneuro_data.conversion.anipose_interface import AniposeInterface
 from beneuro_data.conversion.beneuro_converter import BeNeuroConverter
@@ -14,6 +15,8 @@ from beneuro_data.data_validation import (
     validate_raw_session,
 )
 from beneuro_data.spike_sorting import run_kilosort_on_session_and_save_in_raw
+
+logger = set_logging(__name__)
 
 
 def _try_adding_kilosort_to_source_data(
@@ -42,6 +45,8 @@ def _try_adding_kilosort_to_source_data(
         warnings.warn(
             "You might want to run Kilosort. Found ephys data but no Kilosort output."
         )
+    else:
+        warnings.warn("No ephys or kilosort data found")
 
 
 def _try_adding_profile_to_source_data(source_data: dict, raw_session_path: Path) -> None:
@@ -58,9 +63,7 @@ def _try_adding_profile_to_source_data(source_data: dict, raw_session_path: Path
         )
 
 
-def _try_adding_anipose_to_source_data(
-    source_data: dict, raw_session_path: Path
-):
+def _try_adding_anipose_to_source_data(source_data: dict, raw_session_path: Path):
     csv_paths = list(raw_session_path.glob("**/*3dpts_angles.csv"))
 
     if len(csv_paths) == 0:
@@ -112,7 +115,7 @@ def convert_to_nwb(
         raise ValueError(f"{raw_session_path} is not in {base_path / 'raw'}")
 
     # validate session before doing any conversion
-    _, ephys_files, _, _, _ ,_ = validate_raw_session(
+    _, ephys_files, _, _, _, _ = validate_raw_session(
         raw_session_path,
         subject_name,
         include_behavior=True,
@@ -132,33 +135,6 @@ def convert_to_nwb(
     nwb_file_output_path = raw_session_path / f"{raw_session_path.name}.nwb"
     if nwb_file_output_path.exists():
         raise FileExistsError(f"NWB file already exists at {nwb_file_output_path}")
-
-    # for raw_recording_path in _find_spikeglx_recording_folders_in_session(raw_session_path):
-    #    raw_recording_ephys_path = (
-    #        raw_session_path
-    #        / f"{raw_session_path.name}_ephys"
-    #        / raw_recording_path.name
-    #    )
-
-    #    # make the subject's, session's, and ephys folders if they don't exist
-    #    # this creates all of them
-    #    if not raw_recording_ephys_path.exists():
-    #        raw_recording_ephys_path.mkdir(parents=True, exist_ok=False)
-
-    #    # see if kilosort has already been run
-    #    raw_probe_folders = sorted(
-    #        [p.name for p in raw_recording_path.iterdir() if p.is_dir()]
-    #    )
-    #    raw_probe_folders = sorted(
-    #        [p.name for p in raw_recording_ephys_path.iterdir() if p.is_dir()]
-    #    )
-    #    if (not run_kilosort) and (raw_probe_folders != raw_probe_folders):
-    #        non_sorted_probe_folders = sorted(
-    #            list(set(raw_probe_folders).difference(set(raw_probe_folders)))
-    #        )
-    #        warnings.warn(
-    #            f"Looks like not all probes have been kilosorted. You might want to do it.\nNon-sorted folders:\n{non_sorted_probe_folders}"
-    #        )
 
     if run_kilosort:
         # kilosort needs around 4.5 GB of GPU memory, might fail otherwise
@@ -183,18 +159,14 @@ def convert_to_nwb(
         },
     )
 
-    _try_adding_kilosort_to_source_data(
-        source_data, raw_session_path
-    )
+    _try_adding_kilosort_to_source_data(source_data, raw_session_path)
 
     _try_adding_profile_to_source_data(source_data, raw_session_path)
 
-    _try_adding_anipose_to_source_data(
-        source_data, raw_session_path
-    )
+    _try_adding_anipose_to_source_data(source_data, raw_session_path)
 
     # finally, run the conversion
-    converter = BeNeuroConverter(source_data)
+    converter = BeNeuroConverter(source_data, verbose=False)
 
     metadata = converter.get_metadata()
 
@@ -207,5 +179,6 @@ def convert_to_nwb(
         metadata=metadata,
         nwbfile_path=nwb_file_output_path,
     )
+    logger.info(f"Successfully saved file {nwb_file_output_path.name}")
 
     return nwb_file_output_path
