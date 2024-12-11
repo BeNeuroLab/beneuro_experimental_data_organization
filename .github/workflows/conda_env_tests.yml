@@ -10,7 +10,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        fail-fast: false
         os: [ubuntu-latest, windows-latest]
         python-version: [ "3.10", "3.11", "3.12" ]
 
@@ -31,7 +30,8 @@ jobs:
 
       - name: Find environment file
         if: runner.os == 'Linux'
-        run: find . -name "environment.yml
+        run: |
+          find . -name "environment.yml
 
       - name: Create and activate Conda environment and install dependencies
         shell: bash -l {0}
