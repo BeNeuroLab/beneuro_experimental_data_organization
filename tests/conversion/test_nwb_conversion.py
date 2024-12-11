@@ -4,7 +4,7 @@ import pytest
 from pynwb import NWBHDF5IO
 
 from beneuro_data.config import _load_config
-from beneuro_data.conversion import convert_to_nwb
+from beneuro_data.conversion.to_nwb import convert_to_nwb
 
 DATA_DIR = Path("/data/nwb_prototype/")
 
