@@ -4,10 +4,23 @@ import warnings
 
 # Create a logger for the package
 def set_logging(
-    file_name,
-):
+    file_name: str,
+) -> logging.Logger:
+    """
+    Set project-wide logging
+
+    Parameters
+    ----------
+    file_name: str
+        Name of the module being logged
+
+    Returns
+    -------
+    logger: logging.Logger
+        logger object
+    """
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )

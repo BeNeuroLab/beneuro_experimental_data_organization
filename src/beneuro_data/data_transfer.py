@@ -183,7 +183,7 @@ def upload_raw_session(
                 allowed_extensions_not_in_root,
             )
         else:
-            print("Skipping ephys upload; .bin or .meta files present")
+            logger.info("Skipping ephys upload; .bin or .meta files present")
 
     if include_videos:
         if _force:
@@ -201,7 +201,7 @@ def upload_raw_session(
                 remote_root,
             )
         else:
-            print("Skipping video upload; .avi files present")
+            logger.info("Skipping video upload; .avi files present")
 
     if include_extra_files:
         upload_extra_files(
@@ -228,7 +228,7 @@ def upload_raw_session(
                 remote_root,
             )
         else:
-            print("Skipping nwb upload; .nwb files present")
+            logger.info("Skipping nwb upload; .nwb files present")
 
     if include_pyaldata:
         if _force:
@@ -246,7 +246,7 @@ def upload_raw_session(
                 remote_root,
             )
         else:
-            print("Skipping pyaldata upload; .mat files present")
+            logger.info("Skipping pyaldata upload; .mat files present")
 
     if include_kilosort:
         if _filetype_not_present(
@@ -259,7 +259,7 @@ def upload_raw_session(
                 remote_root,
             )
         else:
-            print("Skipping pyaldata upload; .mat files present")
+            logger.info("Skipping pyaldata upload; .mat files present")
 
     return True
 

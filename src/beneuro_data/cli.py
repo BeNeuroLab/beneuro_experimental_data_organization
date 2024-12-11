@@ -55,7 +55,7 @@ def to_pyal(
     """
     # TODO: Make custom channel map option in case we dont agree with pinpoint
 
-    from beneuro_data.conversion.convert_nwb_to_pyaldata import convert_nwb_to_pyaldata
+    from beneuro_data.conversion.nwb_to_pyal import convert_nwb_to_pyaldata
 
     config = _load_config()
     local_session_path = config.get_local_session_path(session_name, "raw")
@@ -141,7 +141,7 @@ def to_nwb(
         `bnd to-nwb M037_2024_01_01_10_00 --sort-probe imec0 --sort-probe imec1`
     """
     # this will throw an error if the dependencies are not available
-    from beneuro_data.conversion.convert_to_nwb import convert_to_nwb
+    from beneuro_data.conversion.to_nwb import convert_to_nwb
 
     config = _load_config()
     local_session_path = config.get_local_session_path(session_name, "raw")
@@ -508,7 +508,7 @@ def up(
         )
         message = f"Last session of {animal} uploaded."
     if up_done:
-        logger.info(message)
+        print(message)
 
     return True
 

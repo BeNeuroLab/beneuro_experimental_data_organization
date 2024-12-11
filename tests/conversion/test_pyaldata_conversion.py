@@ -3,7 +3,7 @@ import pytest
 import scipy
 
 from beneuro_data.config import _load_config
-from beneuro_data.conversion.convert_nwb_to_pyaldata import convert_nwb_to_pyaldata
+from beneuro_data.conversion.nwb_to_pyal import convert_nwb_to_pyaldata
 
 
 @pytest.mark.needs_experimental_data

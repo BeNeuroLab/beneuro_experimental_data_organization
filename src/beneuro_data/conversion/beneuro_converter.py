@@ -6,12 +6,15 @@ from neuroconv import NWBConverter
 from neuroconv.datainterfaces import SpikeGLXRecordingInterface  # PhySortingInterface
 from neuroconv.tools.signal_processing import get_rising_frames_from_ttl
 
+from beneuro_data import set_logging
 from beneuro_data.conversion.animal_profile_interface import AnimalProfileInterface
 from beneuro_data.conversion.anipose_interface import AniposeInterface
 from beneuro_data.conversion.multiprobe_kilosort_interface import (
     MultiProbeKiloSortInterface,
 )
 from beneuro_data.conversion.pycontrol_interface import PyControlInterface
+
+logger = set_logging(__name__)
 
 
 def chunked_first_rise(memmap_array: np.memmap, chunk_size: int = 1_000):
@@ -81,6 +84,7 @@ class BeNeuroConverter(NWBConverter):
         "AnimalProfile": AnimalProfileInterface,
         "Anipose": AniposeInterface,
     }
+    logger.info("Extracted available interfaces")
 
     def temporally_align_data_interfaces(self):
         adjusting_times = {}
@@ -145,5 +149,4 @@ class BeNeuroConverter(NWBConverter):
 
                 adjusting_times[f"Kilosort {probe_name}"] = first_rise_seconds * 1000
 
-        print("Times of the different interfaces were adjusted with the following values:")
-        print(adjusting_times)
+        logger.info(f"Interface adjusted with time values: {adjusting_times}")

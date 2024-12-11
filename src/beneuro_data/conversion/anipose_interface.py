@@ -13,8 +13,11 @@ from neuroconv.utils import DeepDict
 from pydantic import FilePath
 from pynwb import NWBFile
 
+from beneuro_data import set_logging
 from beneuro_data.data_validation import _find_spikeglx_recording_folders_in_session
 from beneuro_data.spike_sorting import get_ap_stream_names
+
+logger = set_logging(__name__)
 
 
 class AniposeInterface(BaseTemporalAlignmentInterface):
@@ -193,7 +196,9 @@ class AniposeInterface(BaseTemporalAlignmentInterface):
                 f"Could not find SpikeGLX .ap streams in {self.raw_session_path}"
             )
 
-        print("Setting pose estimation timestamps using pulse signal from SpikeGLX...")
+        logger.info(
+            "Setting pose estimation timestamps using pulse signal from SpikeGLX..."
+        )
 
         rising_edges_dict = {}
         for stream_name in stream_names:
