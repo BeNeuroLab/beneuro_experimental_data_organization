@@ -212,6 +212,7 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
                             "-f",
                             f"{(config.REPO_PATH / 'environment.yml')}",
                             "--prune",
+                            "--quiet",
                         ],
                         shell=True,
                     )
@@ -223,9 +224,12 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
                             "update",
                             "-f",
                             f"{str(Path(config.REPO_PATH / 'environment.yml'))}",
-                            "prune",
+                            "--prune",
+                            "--quiet",
                         ]
                     )
+            else:
+                _run_git_command(config.REPO_PATH, ["pull", "origin", "main"])
 
         elif install_method == "poetry":
             _run_git_command(config.REPO_PATH, ["pull", "origin", "main"])
