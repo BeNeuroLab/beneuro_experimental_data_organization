@@ -27,6 +27,7 @@ jobs:
         run: |
           conda init bash
           source ~/.bashrc
+          find . -name "environment.yml"
 
       - name: Create and activate Conda environment and install dependencies
         shell: bash -l {0}
