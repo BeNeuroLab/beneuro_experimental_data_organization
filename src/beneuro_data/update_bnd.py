@@ -226,6 +226,8 @@ def update_bnd(install_method: str, print_new_commits: bool = False) -> None:
                             "prune",
                         ]
                     )
+            else:
+                _run_git_command(config.REPO_PATH, ["pull", "origin", "main"])
 
         elif install_method == "poetry":
             _run_git_command(config.REPO_PATH, ["pull", "origin", "main"])
