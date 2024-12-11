@@ -31,7 +31,7 @@ jobs:
       - name: Find environment file
         if: runner.os == 'Linux'
         run: |
-          find . -name "environment.yml
+          find . -name "environment.yml"
 
       - name: Create and activate Conda environment and install dependencies
         shell: bash -l {0}
