@@ -5,6 +5,7 @@ import typer
 from rich import print
 from typing_extensions import Annotated
 
+from beneuro_data import set_logging
 from beneuro_data.config import (
     _check_is_git_track,
     _check_root,
@@ -19,6 +20,7 @@ from beneuro_data.query_sessions import (
 from beneuro_data.update_bnd import check_for_updates, update_bnd
 
 app = typer.Typer()
+logger = set_logging(__name__)
 
 
 @app.command()
@@ -506,7 +508,7 @@ def up(
         )
         message = f"Last session of {animal} uploaded."
     if up_done:
-        print(message)
+        logger.info(message)
 
     return True
 

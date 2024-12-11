@@ -2,21 +2,6 @@
 
 This is a collection of functions for managing the experimental data recorded in the 
 BeNeuro Lab, and a CLI tool called `bnd` for easy access to this functionality.
-
-# Pipeline
-The intended pipeline of use of `bnd` is as follows:
-
-After you recorded an experimental session in the lab PCs:
-```shell
-# From the lab PC
-$ bnd up MXX -b -e -v  # Uploads latest behaviour ephys and videos session of animal MXX to RDS
-```
-On your local PC:
-```shell
-$ bnd dl MXX_2024_01_01_09_00  # Download latest session of animal MXX from RDS to local PC
-$ bnd to-pyal MXX_2024_01_01_09_00  # Convert session into pyaldata format. Kilosorts and converts to nwb before
-$ bnd up MXX_2024_01_01_09_00 -n -p  # Still pending. Uploads nwb and pyaldata to rds
-```
 # Setting up
 ## Installation (user)
 If you just want to use bnd without the hassle of going through poetry we can do this 
@@ -33,111 +18,31 @@ with conda
    ```shell
    conda env create --file=environment.yml
    ```
-2. Activate environments and check tests pass:
+4. Create your configuration file:
    ```shell
-   # Activate bnd
-   conda activate bnd
-   
-   # Run tests
-   pytest 
-   ```
-3. Hopefully all tests passed!
-## Installation (dev)
-1. You will need the environment management tool [poetry](https://python-poetry.org). We 
-   recommend using the official installer:
-    - On Linux, MacOS or WSL:
-        ```shell
-        curl -sSL https://install.python-poetry.org | python3 -
-        ```
-   - On Windows Powershell: 
-       ```shell
-      # Use "python" instead of "py" if the line below doesnt work 
-       (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
-     ```
-     - You may need to add poetry to $PATH environment variable
-
-   
-2. Clone this repo:
-   ```shell
-   git clone https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git
+   bnd init  # Provide the path to the repo, and to local and remote data storage
+   bnd --help # Start reading about the functions!
    ```
 
-3. Navigate into the folder you just downloaded (`beneuro_experimental_data_organization`)
-4. Create the environment associated to the project: `poetry shell`. This will generate a 
-   virtualenv where you install all the packages needed for `bnd` and activate it
-5. Install the package with either `poetry install` or if you want processing 
-   functionality: `poetry install --with processing`. For more info, see the [spike 
-   sorting instructions](#spike-sorting).
+# Pipeline
+The intended pipeline of use of `bnd` is as follows:
 
-6. Test that the installation worked with: `poetry run pytest`. Hopefully you'll see 
-   green on the bottom (some yellow is fine) meaning that all tests pass :)
-
-
-> Note:
->
-> If you want to make the environment activation a bit more straightforward instead of 
-> navigating to the folder and running `poetry shell` you can make an alias in your 
-> terminal app:
-> - Windows:
->   ```shell
->   # Open PowerShell as admin
->   $ notepad C:\Windows\System32\WindowsPowerShell\v1.0\profile.ps1
->   ```
->   Edit the file, add the following, and save it in the folder
->   ```text
->   function ActivatePoetryBnd {
->    & " \path\to\your\project\Scripts\activate"
->   }
->   Set-Alias activate_bnd ActivatePoetryBnd
->   $ alias activate_bnd='source /path/to/your/project/.venv/bin/activate'
->   ```
->   Close the file and go back to powershell and run
->   ```shell
->   $ activate_bnd
->   ```
-> - Linux:
->   ```shell
->   $ nano ~/.bashrc # or vim ~./bashrc
->   $ alias activate_bnd='source /path/to/your/project/.venv/bin/activate'
->   ```
-
-
-## Configuring the local and remote data storage
-The tool needs to know where the experimental data is stored locally and remotely.
-
-0. Mount the RDS server. (If you're able to access the data on it from the file browser, it's probably already mounted.)
-
-1. Run `bnd init` and enter the root folders where the experimental data are stored on the local computer and the server. These refer to the folders where you have `raw` and `processed` folders.
-
-   This will create a file called `.env` in the `beneuro_experimental_data_organization` folder and add the following content:
-   ```
-   LOCAL_PATH = /path/to/the/root/of/the/experimental/data/storage/on/the/local/computer
-   REMOTE_PATH = /path/to/the/root/of/the/experimental/data/storage/where/you/mounted/RDS/to
-   ```
-
-   Alternatively, you can create this file by hand.
-
-2. Run `bnd check-config` to verify that the folders in the config have the expected `raw` and `processed` folders within them.
-
-## Linting and formatting
-
-If you want to have automatic code formatting in the project consider using the configured 
-`pre-commit` hook in the `.pre-commit-config.yaml`.
-
-Run the following command inside the directory of the project.
+After you recorded an experimental session in the lab PCs:
 ```shell
-$ poetry run pre-commit install
+# From the lab PC
+$ bnd up MXX -b -e -v  # Uploads latest behaviour ephys and videos session of animal MXX to RDS
 ```
-
-Now, every time you commit, the tool ruff will automatically check your code, fix it 
-when possible, and reformat it. If `ruff` has to fix your code it will consider the commit 
-a Fail but it will fix it automatically so no need to worry.
-
+On your local PC:
+```shell
+$ bnd dl MXX_2024_01_01_09_00  # Download latest session of animal MXX from RDS to local PC
+$ bnd to-pyal MXX_2024_01_01_09_00 -k # Convert session into pyaldata format. Kilosorts and converts to nwb before
+$ bnd up MXX_2024_01_01_09_00 -n -p  # Still pending. Uploads nwb and pyaldata to rds
+```
 
 # CLI usage
 ## Help
 - To see the available commands: `bnd --help`
-- To see the help of a command (e.g. `rename-videos`): `bnd rename-videos --help`
+- To see the help of a command (e.g. `rename-videos`): `bnd up --help`
 
 ## Uploading the data
 Once you're done recording a session, you can upload that session to the server with:
@@ -145,6 +50,23 @@ Once you're done recording a session, you can upload that session to the server 
   `bnd up <subject-name-or-session-name>`
 
 This should first rename the videos and extra files (unless otherwise specified), validate the data, then copy it to the server, and complain if it's already there.
+You can specify different data options:
+```text
+| --include-behavior         -b  --ignore-behavior         -B    Upload behavioral data (-b) or not (-B).              |
+│                                                                [default: ignore-behavior]                            │
+│ --include-ephys            -e  --ignore-ephys            -E    Upload ephys data (-e) or not (-E).                   │
+│                                                                [default: ignore-ephys]                               │
+│ --include-videos           -v  --ignore-videos           -V    Upload video data (-v) or not (-V).                   │
+│                                                                [default: ignore-videos]                              │
+│ --include-nwb              -n  --ignore-nwb              -N    Upload NWB files (-n) or not (-N).                    │
+│                                                                [default: ignore-nwb]                                 │
+│ --include-pyaldata         -p  --ignore-pyaldata         -P    Upload PyalData files (-p) or not (-P).               │
+│                                                                [default: ignore-pyaldata]                            │
+│ --include-kilosort-output  -k  --ignore-kilosort-output  -K    Upload Kilosort output (-k) or not (-K).              │
+│                                                                [default: ignore-kilosort-output] 
+```
+
+If will skip a data type if its already present in RDS
 
 ## Downloading data from the server
 Downloading data to your local computer is similar to uploading, but instead of throwing errors, missing or invalid data is handled by skipping it and warning about it.
@@ -152,6 +74,8 @@ Downloading data to your local computer is similar to uploading, but instead of 
 Using the session's path assuming you have RDS mounted to your computer:
 
   `bnd dl <subject-name-or-session-name>`
+
+## Pyaldata conversion
 
 ## Spike sorting
 Currently we are using Kilosort 4 for spike sorting, and provide a command to run sorting on a session and save the results in the processed folder.
@@ -182,3 +106,18 @@ Suppressing output:
   `bnd kilosort-session . M020 --no-verbose`
 
 # Please file an issue if something doesn't work or is just annoying to use!
+
+Notes from nvidia debugging:
+check
+nvidia-smi
+
+if it fails:
+sudo apt-get purge nvidia*
+sudo ubuntu-drivers autoinstall
+sudo reboot
+
+purge container toolking
+sudo apt-get purge nvidia-container-toolkit
+sudo apt-get update
+sudo apt-get install -y nvidia-container-toolkit
+sudo systemctl restart docker

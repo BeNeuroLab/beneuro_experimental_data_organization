@@ -2,6 +2,7 @@ import glob
 import warnings
 from pathlib import Path
 
+from beneuro_data import set_logging
 from beneuro_data.data_transfer_helpers import (
     _check_list_of_files_before_copy,
     _copy_list_of_files,
@@ -24,6 +25,8 @@ from beneuro_data.extra_file_handling import (
 )
 from beneuro_data.validate_argument import validate_argument
 from beneuro_data.video_renaming import rename_raw_videos_of_session
+
+logger = set_logging(__name__)
 
 
 def _filetype_not_present(remote_session_path: Path, filetype: str) -> bool:
@@ -158,7 +161,7 @@ def upload_raw_session(
                 whitelisted_files_in_root,
             )
         else:
-            print("Skipping behaviour upload; .txt or .pca files present")
+            logger.info("Skipping behaviour upload; .txt or .pca files present")
 
     if include_ephys:
         if _force:
