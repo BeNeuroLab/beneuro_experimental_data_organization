@@ -36,6 +36,8 @@ def _filetype_not_present(remote_session_path: Path, filetype: str) -> bool:
             return False
         else:
             return True
+    else:
+        return True
 
 
 def upload_raw_session(
