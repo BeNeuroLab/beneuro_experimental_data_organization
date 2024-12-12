@@ -57,9 +57,12 @@ def _copy_list_of_files(
         dest_path.parent.mkdir(parents=True, exist_ok=True)
 
         # if the file doesn't exist, copy it and move to the next one
-        if not dest_path.exists():
-            shutil.copy2(source_path, dest_path)
-            continue
+        try:
+            if not dest_path.exists():
+                shutil.copy2(source_path, dest_path)
+                continue
+        except:
+            breakpoint()
 
         # handle the case when the file exists
         if if_exists == "overwrite":

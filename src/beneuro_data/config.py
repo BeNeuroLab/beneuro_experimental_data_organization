@@ -42,8 +42,9 @@ class Config(BaseSettings):
         "traj_plan.txt",
         "trajectory.txt",
         "channel_map.txt",
+        "bci.log",
     )
-    EXTENSIONS_TO_RENAME_AND_UPLOAD: tuple[str, ...] = (".txt",)
+    EXTENSIONS_TO_RENAME_AND_UPLOAD: tuple[str, ...] = (".txt", ".log")
     REPO_URL = "https://github.com/BeNeuroLab/beneuro_experimental_data_organization.git"
 
     @staticmethod

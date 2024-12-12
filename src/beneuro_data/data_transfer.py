@@ -36,6 +36,8 @@ def _filetype_not_present(remote_session_path: Path, filetype: str) -> bool:
             return False
         else:
             return True
+    else:
+        return True
 
 
 def upload_raw_session(
@@ -151,7 +153,7 @@ def upload_raw_session(
             )
 
         elif _filetype_not_present(
-            remote_session_path, filetype="*.txt"
+            remote_session_path, filetype="*/run_task-task_files/*.txt"
         ) and _filetype_not_present(remote_session_path, filetype="*.pca"):
             upload_raw_behavioral_data(
                 local_session_path,

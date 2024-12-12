@@ -32,6 +32,10 @@ def _find_whitelisted_files_in_root(
         if (session_path / (session_name + "_" + filename)).exists():
             files_found.append(session_path / (session_name + "_" + filename))
 
+        # try the filename with the session name in front of it and no underscore
+        if (session_path / (session_name + filename)).exists():
+            files_found.append(session_path / (session_name + "_" + filename))
+
     return files_found
 
 
@@ -72,6 +76,7 @@ def _find_extra_files_with_extensions(
     List of paths to the files found.
     """
     extra_files_with_allowed_extensions = []
+
     for extension in extensions:
         extra_files_with_allowed_extensions.extend(
             _find_extra_files_with_extension(session_path, extension)
