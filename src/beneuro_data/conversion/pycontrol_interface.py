@@ -98,7 +98,7 @@ class PyControlInterface(BaseTemporalAlignmentInterface):
             pos_data = np.stack([data_x, data_y]).T
         except Exception as e:
             warnings.warn(f"{e}")
-            logger.warn(
+            logger.warning(
                 "Adding nans at the end of short array. Please fix this in the future."
             )
             min_array = np.argmin([arr.shape for arr in [data_x, data_y]])
