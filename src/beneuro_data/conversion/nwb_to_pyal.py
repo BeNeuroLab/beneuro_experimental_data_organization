@@ -430,7 +430,6 @@ class ParsedNWBFile:
         """
         if "Position" not in self.behavior.keys():
             warnings.warn("No motion data available")
-            self.pycontrol_motion_sensors = np.nan
             return
 
         ball_position_spatial_series = self.behavior["Position"].spatial_series[
