@@ -240,7 +240,7 @@ def upload_raw_session(
                 local_root,
                 remote_root,
             )
-        if _filetype_not_present(remote_session_path, filetype="*.nwb"):
+        if _filetype_not_present(remote_session_path, filetype="*.mat"):
             upload_pyaldata_file(
                 local_session_path,
                 subject_name,
