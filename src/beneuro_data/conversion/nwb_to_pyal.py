@@ -58,6 +58,23 @@ def _bin_spikes(probe_units: Units, bin_size: float) -> np.array:
     return binned_spikes
 
 
+def _transform_chan_best_to_unit_guide(arr: np.array) -> np.array:
+    # Find unique values and their counts
+    unique_values, counts = np.unique(arr, return_counts=True)
+
+    # Create the result list
+    result = []
+
+    # Iterate through unique values and counts to form the Nx2 matrix
+    for val, count in zip(unique_values, counts):
+        for i in range(1, count + 1):
+            result.append([val, i])
+
+    # Convert to numpy array
+    result_array = np.array(result)
+    return result_array
+
+
 def _parse_pynwb_probe(
     probe_units: Units, electrode_info: pd.DataFrame, bin_size: float
 ) -> dict:
@@ -121,12 +138,15 @@ def _parse_pynwb_probe(
 
         brain_area_neurons = np.where(np.isin(chan_best, brain_area_channels))[0]
 
-        # Define unit guide
+        # Define chan best
         unsorted_chan_best = chan_best[brain_area_neurons]
         sorted_chan_best_indices = np.argsort(
             unsorted_chan_best
         )  # Variable with sorted indices
         sorted_chan_best = unsorted_chan_best[sorted_chan_best_indices]
+
+        # Define unit guide
+        unit_guide = _transform_chan_best_to_unit_guide(sorted_chan_best)
 
         # Take neurons that are brain area specific and them sort them according to unit guide
         brain_area_spikes_and_chan_best[brain_area.replace("-", "_")] = {
@@ -134,6 +154,9 @@ def _parse_pynwb_probe(
         }
         brain_area_spikes_and_chan_best[brain_area.replace("-", "_")]["chan_best"] = (
             sorted_chan_best
+        )
+        brain_area_spikes_and_chan_best[brain_area.replace("-", "_")]["unit_guide"] = (
+            unit_guide
         )
         brain_area_spikes_and_chan_best[brain_area.replace("-", "_")]["KSLabel"] = (
             probe_units.KSLabel[brain_area_neurons][sorted_chan_best_indices]
@@ -590,12 +613,17 @@ class ParsedNWBFile:
                 for brain_area_key, brain_area_spike_data in self.spike_data[
                     probe_key
                 ].items():
-                    # Add unit guide
+                    # Add chan best
                     self.pyaldata_df[f"{brain_area_key}_chan_best"] = [
                         brain_area_spike_data["chan_best"]
                     ] * len(self.pyaldata_df)
 
                     # Add unit guide
+                    self.pyaldata_df[f"{brain_area_key}_unit_guide"] = [
+                        brain_area_spike_data["unit_guide"]
+                    ] * len(self.pyaldata_df)
+
+                    # Add kilosort labels
                     self.pyaldata_df[f"{brain_area_key}_KSLabel"] = [
                         brain_area_spike_data["KSLabel"]
                     ] * len(self.pyaldata_df)
